@@ -6,8 +6,9 @@ function flee(creep, goal) {
       // We need to set the defaults costs higher so that we
       // can set the road cost lower in `roomCallback`
       plainCost: 2,
-      swampCost: 10,
+      swampCost: 100,
       flee: true,
+      maxRooms: 1,
 
       roomCallback: function(roomName) {
 
@@ -89,6 +90,9 @@ function combatCalc(creep,target) {
      */
     export function run(creep) {
         if(Game.flags.attack === undefined) {
+            if(global.defenseNeeded <= 0) {
+                creep.suicide()
+            }
             var closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep) {
                 return creep.owner.username !== "chungus3095"
             }});

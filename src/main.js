@@ -35,10 +35,11 @@ Memory.miningrooms = [
 global.nextupdate = [];
 global.nexttick = [];
 global.avgcpu = []
+global.cache = {}
 
 // Import necessary modules for various roles and functions
 import { run as harvtick } from './roles/role.harvester';
-import { newharvcheck, newbuildcheck, newhaulercheck, newcombatcheck } from "./handler.newunits";
+import { newharvcheck, newbuildcheck, newhaulercheck, newcombatcheck, createqueen } from "./handler.newunits";
 import { run as buildertick } from "./roles/role.builder";
 import { run as combattick } from "./roles/role.combat";
 import { remove } from "./libs/general.sourceregistering";
@@ -55,6 +56,8 @@ import { isUndefined } from 'lodash';
 if(global.fixticks === undefined) {
     global.fixticks = 0
 }
+global.defenseNeeded = 0
+global.timer = 0
 global.updatecache = 400
 console.log("restarting loop");
 //var ramparttest = require("rampartcalc")
@@ -66,6 +69,7 @@ export function loop () {
     }
     RawMemory.setActiveSegments([1]);
     Memory.haulerlevel = 0
+    global.timer+=1
     global.fixticks += 1
     global.updatecache += 1
     if(global.restartEco!==undefined) console.log("consolidating eco to "+global.restartEco)
@@ -80,10 +84,9 @@ export function loop () {
                     let linkmining = creep.pos.findInRange(FIND_MY_STRUCTURES,3,{filter: function(structure) {
                         return structure.structureType===STRUCTURE_LINK
                     }})
-                if(linkmining.length>0) {
-
-                } else {
+                if(linkmining.length===0) {
                     let dist = getTrueDistance(new RoomPosition(Game.spawns.Spawn1.pos.x,Game.spawns.Spawn1.pos.y,Game.spawns.Spawn1.room.name),new RoomPosition(creep.pos.x,creep.pos.y,creep.room.name))
+                    if(creep.room.controller&&creep.room.controller.reservation) dist = dist * 1.5
                     full += dist
                 }
             }
@@ -94,7 +97,7 @@ export function loop () {
         Memory.haulerneeded = (Math.round((full)/2.5))
         global.updatecache = 0
     }
-    if(global.defenseNeeded >= 1) {
+    if(global.defenseNeeded >= 20) {
         console.log("defense required")
     }
 
@@ -105,28 +108,40 @@ export function loop () {
     //Gather info on which spawn for haulers to focus on
     global.haulerfocus=0
     let grab = 0
-    let info = 1000000000000000
+    let info = 1000000000000
     let keyfix = Game.spawns
     let spawnamount = 0
     for(let a in Game.spawns) {
         spawnamount+=1
     }
-    for(let temp in Game.spawns) {
-        let spawn = Game.spawns[temp]
+    global.LRBmake = 0
+    global.LRBroom = 0
+    for(let temp in Game.rooms) {
+        let room = Game.rooms[temp]
+        if(!room.controller || room.controller.my===false) {
+            continue
+        }
+        if(room.controller.level <= 4) {
+            global.LRBmake = 1
+            global.LRBroom = room.name
+        }
+        let spawn = room.getMasterSpawn()
         if(spawn.room.storage) {
-            if(spawn.room.storage.store[RESOURCE_ENERGY]<info&&(spawn.memory.queen!==undefined||spawn.memory.queen2!==undefined)||spawnamount<=1) {
-                grab=temp
+            if(room.storage.store[RESOURCE_ENERGY]<info&&(spawn.memory.queen!==undefined||spawn.memory.queen2!==undefined||global.restartEco!==undefined)||spawnamount<=1) {
+                grab=spawn.name
                 info=spawn.room.storage.store[RESOURCE_ENERGY]
             }
         }
     }
     global.haulerfocus=grab
     // Loop through each spawn and manage units and tasks
-    for(let spawnid in Game.spawns) {
-
+    for(let roomid in Game.rooms) {
+        let room = Game.rooms[roomid]
         global.createdunit = 0
-        let currentspawn = Game.spawns[spawnid];
-
+        let currentspawn = room.getMasterSpawn()
+        if(!room.controller || room.controller.my===false || currentspawn === undefined) {
+            continue
+        }
         if(currentspawn.memory.harvesters === undefined) {
             currentspawn.memory = {
                 harvesters: [],
@@ -135,7 +150,7 @@ export function loop () {
                 builderallocations: { upgrade: 0, buildRoad: 0, general: 0 }
             }
         }
-        let test = currentspawn.room.find(FIND_STRUCTURES, {
+        let test = room.find(FIND_STRUCTURES, {
             filter: (structure) => {
                 return (structure.structureType == STRUCTURE_EXTRACTOR)
             }
@@ -144,16 +159,17 @@ export function loop () {
             global.isextractor = test[0].id;
         } else global.isextractor = undefined
         // Cache the number of extensions in the spawn's room
-        Memory.storecache = currentspawn.room.find(FIND_STRUCTURES, {
+        Memory.storecache = room.find(FIND_MY_STRUCTURES, {
             filter: (structure) => {
-                return (structure.structureType == STRUCTURE_EXTENSION);
+                return (structure.structureType == STRUCTURE_EXTENSION&&structure.isActive());
             }
         }).length;
-        let towers = currentspawn.room.find(FIND_STRUCTURES, {
+        let towers = room.find(FIND_STRUCTURES, {
             filter: (structure) => {
                 return (structure.structureType == STRUCTURE_TOWER)
             }
         });
+        let towerdata = {}
         if(Game.cpu.bucket < 2000) {
             console.log("low bucket, disabling non-needed codebases")
         }
@@ -163,7 +179,20 @@ export function loop () {
                     return creep.owner.username !== "chungus3095"
                 }})
                 if(attackers.length > 0) {
-                    attackers.sort((a, b) => b.hits - a.hits);
+                    let healers = tower.room.find(FIND_HOSTILE_CREEPS, {filter: function(creep) {
+                        return creep.owner.username !== "chungus3095" && creep.getActiveBodyparts(HEAL) > 0
+                    }})
+                    if(towerdata.attackedhealer===1) {
+                        attackers = tower.room.find(FIND_HOSTILE_CREEPS, {filter: function(creep) {
+                            return creep.owner.username !== "chungus3095" && creep.getActiveBodyparts(HEAL) === 0
+                        }})
+                        console.log("AAAAA")
+                    }
+                    if(healers.length > 0&&towerdata.attackedhealer == 0) {
+                        attackers = healers
+                        towerdata.attackedhealer = 1
+                    }
+                    attackers.sort((a, b) => a.hits - b.hits);
                     tower.attack(attackers[0])
                 } else {
                     let targets = tower.room.find(FIND_STRUCTURES, {
@@ -180,46 +209,66 @@ export function loop () {
                 }
 
             }
-        let alllinks = currentspawn.room.find(FIND_MY_STRUCTURES,{filter: function(structure) {
+        let alllinks = room.find(FIND_MY_STRUCTURES,{filter: function(structure) {
             return structure.structureType === STRUCTURE_LINK
         }})
         for(let I in alllinks) {
             linktick(alllinks[I]);
         }
         // Set cache to 0 if the controller level is 1
-        if(currentspawn.room.controller.level == 1) {
+        if(room.controller.level == 1) {
             Memory.storecache = 0;
         }
         global.kill = 0
         if(Game.cpu.bucket >= 2000) {
-            if(currentspawn.room.controller.level > 2) {
+            if(room.controller.level > 2) {
                 let add = 0
                 for(let temp in Memory.miningrooms) {
                     let I = Memory.miningrooms[temp]
-                    if(I.room ==currentspawn.room.name) {
+                    if(I.room ==room.name) {
                         add = 1
                     }
                 }
                 if(add == 0) {
-                    Memory.miningrooms.push({room:currentspawn.room.name, usedSegment: 0})
+                    Memory.miningrooms.push({room:room.name, usedSegment: 0})
                 }
             }
         }
         // Check for new harvester, builder, and combat units
-        if(Memory.longRangeBuilders.length < 1 && Game.spawns[spawnid].memory.queue.length < 1&&Game.spawns[spawnid].room.controller.level>=5) {
-            Game.spawns[spawnid].queueAppend(
+        if(global.LRBmake===1&&Memory.longRangeBuilders.length < 1 && currentspawn.memory.queue.length < 1&&room.controller.level>=5&&global.restartEco===undefined) {
+            currentspawn.queueAppend(
                 [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY],
-                {spawnid: Game.spawns[spawnid].id,room:"E53S19"},
+                {spawnid: currentspawn.id,room:global.LRBroom},
                 "LRB"
             )
         }
         currentspawn.queueCheck()
-        newharvcheck(spawnid);
-        newbuildcheck(spawnid);
-        newhaulercheck(spawnid);
-        newcombatcheck(spawnid);
+        let allspawns = room.find(FIND_MY_SPAWNS)
+        if(!global.cache) {
+            global.cache={}
+        }
+        for(let spawn of allspawns) {
+            let nearby = []
+            if(nearby.length<=0) {
+                try {
+                    if(spawn.room.getMasterSpawn().memory.queen===undefined&&spawn.room.getMasterSpawn().memory.queen2===undefined&spawn.room.controller.level > 3&&global.restartEco!==undefined) {
+                        newhaulercheck(spawn.name);
+                        newharvcheck(spawn.name);
+                        newbuildcheck(spawn.name);
+                        newcombatcheck(spawn.name);
+                    } else {
+                        newharvcheck(spawn.name);
+                        newbuildcheck(spawn.name);
+                        newhaulercheck(spawn.name);
+                        newcombatcheck(spawn.name);
+                    }
+                } catch(err) {
+                    console.log("spawn "+spawn+" errored spawning with "+err)
+                }
+            }
+        }
         global.defenseNeeded -=1
-        // Run through each harvester in memory and execute its tasks
+        // Waste of cpu
         try {
             for(let I in Memory.haulers) {
                 if(Game.creeps[Memory.haulers[I]].ticksToLive<1000) {
@@ -230,16 +279,16 @@ export function loop () {
         // ||||||||||||||||||||||
         // run for each unit type
         // ||||||||||||||||||||||
-        if(Game.spawns[spawnid].memory.harvesters.length > 0) {
-            Game.spawns[spawnid].memory.harvesters.forEach(item => harvesterforeach(item, spawnid));
+        if(currentspawn.memory.harvesters.length > 0) {
+            currentspawn.memory.harvesters.forEach(item => harvesterforeach(item, currentspawn.name));
         }
         // Run through each builder in memory and execute its tasks
-        if(Game.spawns[spawnid].memory.builders.length > 0) {
-            Game.spawns[spawnid].memory.builders.forEach(item => builderforeach(item, spawnid));
+        if(currentspawn.memory.builders.length > 0) {
+            currentspawn.memory.builders.forEach(item => builderforeach(item, currentspawn.name));
         }
         if(Game.cpu.bucket >= 2000) {
             if(currentspawn.memory.minharvs) {
-                Game.spawns[spawnid].memory.minharvs.forEach(item => minharvsforeach(item, spawnid));
+                currentspawn.memory.minharvs.forEach(item => minharvsforeach(item, currentspawn.name));
             }
         }
         if(currentspawn.memory.queen !== undefined) {
@@ -257,12 +306,14 @@ export function loop () {
                     currentspawn.memory.queen2 = undefined
                 }
             }
-            if(currentspawn.room.terminal!==undefined) {
-                terminaltick(currentspawn.room.terminal)
+            if(room.terminal!==undefined) {
+                // too much usage rn
+                //terminaltick(room.terminal)
         }
         }
     }
     if(Memory.haulers.length > 0) {
+        console.log("test "+global.haulerfocus)
         Memory.haulers.forEach(item => haulerforeach(item,global.haulerfocus));
     }
     if(Game.cpu.bucket >= 2000) {
@@ -289,11 +340,17 @@ export function loop () {
         }
         for(let temp in Memory.longRangeBuilders) {
             let Lbuilder  = Memory.longRangeBuilders[temp]
-            if(Game.creeps[Lbuilder] === undefined) {
-                Memory.longRangeBuilders = Memory.longRangeBuilders.splice(temp,1)
-                continue
+            if(Lbuilder in Game.creeps) {
+                LRBtick(Game.creeps[Lbuilder])
+            } else {
+                Memory.creeps[Lbuilder] = undefined;
+                const index = Memory.longRangeBuilders.indexOf(Lbuilder);
+                if (index > -1) {
+                    console.log("epic");
+                    Memory.longRangeBuilders.splice(index, 1);
+                    break;
+                }
             }
-            LRBtick(Game.creeps[Lbuilder])
         }
     }
     // Run the miner code for long-range mining logic
@@ -403,9 +460,9 @@ function haulerforeach(item,focuson) {
 function builderforeach(item, spawntype) {
     if(item in Game.creeps) {
             // Renew builder if it's near the end of its lifespan
-            if(Game.creeps[item].ticksToLive < 1000) {
-                Game.spawns[spawntype].renewCreep(Game.creeps[item]);
-            }
+            //if(Game.creeps[item].ticksToLive < 1000) {
+                //Game.spawns[spawntype].renewCreep(Game.creeps[item]);
+            //}
             // Execute builder tasks
             buildertick(Game.creeps[item], spawntype);
     } else {

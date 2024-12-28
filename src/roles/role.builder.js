@@ -4,13 +4,33 @@ import { remove } from "../libs/general.sourceregistering";
 
     /** @param {Creep} creep **/
     export function run(creep, spawnname) {
-        if(Game.spawns[spawnname].memory.builderallocations.upgrade < 2 && creep.memory.task == undefined) {
-            creep.memory.task = 'upgrade'
-            Game.spawns[spawnname].memory.builderallocations.upgrade += 1
-        }
-        if(Game.spawns[spawnname].memory.builderallocations.general < 3 && creep.memory.task == undefined) {
-            creep.memory.task = 'general'
-            Game.spawns[spawnname].memory.builderallocations.general += 1
+        //if(creep.ticksToLive < 200||creep.memory.regen) {
+        //    creep.moveTo(Game.spawns[spawnname])
+        //    Game.spawns[spawnname].renewCreep(creep)
+        //    creep.memory.regen = 1
+        //    if(creep.ticksToLive > 500) {
+        //        creep.memory.regen = 0
+        //    }
+        //    return
+        //}
+        if(Game.spawns[spawnname].room.controller.level>4) {
+            if(Game.spawns[spawnname].memory.builderallocations.upgrade < 1 && creep.memory.task == undefined) {
+                creep.memory.task = 'upgrade'
+                Game.spawns[spawnname].memory.builderallocations.upgrade += 1
+            }
+            if(Game.spawns[spawnname].memory.builderallocations.general < 2 && creep.memory.task == undefined) {
+                creep.memory.task = 'general'
+                Game.spawns[spawnname].memory.builderallocations.general += 1
+            }
+        } else {
+            if(Game.spawns[spawnname].memory.builderallocations.upgrade < 2 && creep.memory.task == undefined) {
+                creep.memory.task = 'upgrade'
+                Game.spawns[spawnname].memory.builderallocations.upgrade += 1
+            }
+            if(Game.spawns[spawnname].memory.builderallocations.general < 3 && creep.memory.task == undefined) {
+                creep.memory.task = 'general'
+                Game.spawns[spawnname].memory.builderallocations.general += 1
+            }
         }
         new RoomVisual(creep.room.name).text('Builder, task: '+creep.memory.task, creep.pos.x, creep.pos.y+1, {align: 'center',font:0.3,color:'orange',stroke:"white",strokeWidth:0.01});
         if(creep.memory.level < Memory.builderlevel) {

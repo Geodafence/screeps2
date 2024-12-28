@@ -16,6 +16,7 @@ function reverseDirectionTo(target) {
     return reverseDict[creep.pos.getDirectionTo(target)]
 }
     export function tick () {
+
             for (const run in Memory.miningrooms) {
 
                 try {
@@ -59,7 +60,17 @@ function reverseDirectionTo(target) {
                                 Memory.longrangemining[temp].creeps.push(request);
                             }
                         }
+                        let allsettled = 1
                         // Iterate through all assigned creeps for this mining room
+                        for (const nameold in Memory.longrangemining[temp].creeps) {
+                            let Cname = Memory.longrangemining[temp].creeps[nameold];
+                            let creep = Game.creeps[Cname];
+                            if(creep!==undefined) {
+                                if(creep.memory.check !== 1) {
+                                    allsettled = 0
+                                }
+                            }
+                        }
                         for (const nameold in Memory.longrangemining[temp].creeps) {
                             let Cname = Memory.longrangemining[temp].creeps[nameold];
                             let creep = Game.creeps[Cname];
@@ -73,9 +84,50 @@ function reverseDirectionTo(target) {
                                 continue;
                             }
                             new RoomVisual(creep.room.name).text('LRM, mining for room: ' + RoomObject.room, creep.pos.x, creep.pos.y + 1, { align: 'center', font: 0.3, color: 'blue', stroke: "white", strokeWidth: 0.01 });
+                            if(allsettled) {
+                                if (creep.ticksToLive > 10) {
+                                    // Register creep to a source and initiate harvesting
+                                    if(global.timer%2===0) {
+                                        continue
+                                    }
+                                    if (harvest(creep) == OK) {
+                                        if(creep.memory.check !== 1) global.updatecache = 400
+                                        creep.memory.check = 1
+                                    }
+                                    if (creep.store[RESOURCE_ENERGY] > 40) {
+                                        creep.memory.check = 1
+                                        let linkmining = []
+                                        if(creep.memory.linktomine===undefined) {
+                                            linkmining = creep.pos.findInRange(FIND_MY_STRUCTURES,3,{filter: function(structure) {
+                                                return structure.structureType===STRUCTURE_LINK
+                                            }})
+                                            if(linkmining.length>0) {
+                                                creep.memory.linktomine = linkmining[0].id
+                                            }
+                                        }
+                                        if(Game.getObjectById(creep.memory.linktomine)===undefined) {
+                                            creep.memory.linktomine = undefined
+                                        }
+                                        if(creep.memory.linktomine!==undefined) {
+                                            if(creep.transfer(Game.getObjectById(creep.memory.linktomine),RESOURCE_ENERGY)===ERR_NOT_IN_RANGE) {
+                                                creep.move(creep.pos.getDirectionTo(Game.getObjectById(creep.memory.linktomine)))
+                                            }
+                                        } else {
+                                            creep.drop(RESOURCE_ENERGY)
+                                        }
+                                    }
+                                } else {
+                                    remove("sources", creep, true, Memory.longrangemining[temp]);
+                                    creep.say("I die :(")
+                                }
+                                continue
+                            }
                             if(creep.memory.check===1) {
                                 if (creep.ticksToLive > 10) {
                                     creep.memory.state="mining"
+                                    if(global.timer%2===0) {
+                                        continue
+                                    }
                                     // Register creep to a source and initiate harvesting
                                     if (harvest(creep) == OK) {
                                         if(creep.memory.check !== 1) global.updatecache = 400
@@ -101,7 +153,7 @@ function reverseDirectionTo(target) {
                                 continue
                             }
                             // Display label indicating the creep's mining task and target room
-                            if (creep.pos.findInRange(FIND_HOSTILE_CREEPS, 5,{filter: function(creep) {
+                            if (creep.room.find(FIND_HOSTILE_CREEPS, {filter: function(creep) {
                                 return creep.owner.username !== "chungus3095"
                             }}).length > 0) {
                                 let alreadyrequested = -1
@@ -113,18 +165,21 @@ function reverseDirectionTo(target) {
                                 if (alreadyrequested == -1) {
                                     Memory.defenserequests.push({ x: creep.pos.x, y: creep.pos.y, room: creep.room.name })
                                 }
-                                global.defenseNeeded = 20
+                                global.defenseNeeded = 40
                             }
                             // If the creep's energy is not full and it should be mining
                             if (creep.memory.state !== "moving") {
                                 if (creep.room.name != RoomObject.room) {
 
                                     creep.moveTo(new RoomPosition(25, 25, RoomObject.room), { reusePath: 40, visualizePathStyle: { stroke: '#ffffff' } });
-                                    if(creep.memory._move) {
-                                        creep.placeRoadByPath(creep.memory._move.path,"LRMmid")
-                                    }
+                                    //if(creep.memory._move) {
+                                    //    creep.placeRoadByPath(creep.memory._move.path,"LRMmid")
+                                    //}
 
                                 } else {
+                                    if(global.timer%2===0&&creep.memory.check === 1) {
+                                        continue
+                                    }
                                     info = _register("sources", creep, true, Memory.longrangemining[temp]);
                                     if (harvest(creep) == OK) {
                                         if(creep.memory.check !== 1) global.updatecache = 400

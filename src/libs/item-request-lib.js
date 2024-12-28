@@ -7,7 +7,12 @@ function getmasterspawn(creep) {
         for(let I in spawn.memory.itemrequests) {
             let request = spawn.memory.itemrequests[I]
             let istrue = false
-
+            if(request.id === buildId) {
+                istrue = true
+            }
+            if(type) if(request.type === type) istrue = true; else istrue = false;
+            if(amount) if(request.amount === amount) istrue = true; else istrue = false;
+            if(istrue) ret = true
         }
         return ret
     }
@@ -72,19 +77,20 @@ function getmasterspawn(creep) {
                 if(Game.getObjectById(creep.memory.fufilling.id).store[creep.memory.fufilling.request] <creep.memory.fufilling.amount)  {
                     creep.memory.fufilling = undefined
                 }
+                console.log(creep.store[creep.memory.fufilling.request])
                     if (creep.store[creep.memory.fufilling.request] < creep.store.getCapacity()&&creep.store[creep.memory.fufilling.request]<creep.memory.fufilling.amount) {
                         if (creep.memory.fufillStatus == "giving") {
                             creep.memory.fufilling.amount -= creep.store.getCapacity()
                         }
                         creep.memory.fufillStatus = "grabbing"
-                        if (creep.withdraw(Game.getObjectById(creep.memory.fufilling.id), creep.memory.fufilling.request) === ERR_NOT_IN_RANGE) {
+                        if (creep.withdraw(Game.getObjectById(creep.memory.fufilling.id), creep.memory.fufilling.request) !== OK) {
                             creep.moveTo(Game.getObjectById(creep.memory.fufilling.id))
                         }
                     } else {
                         if (creep.memory.fufillStatus == "grabbing") {
                             creep.memory.fufillStatus = "giving"
                         }
-                        if (creep.transfer(Game.getObjectById(creep.memory.fufilling.storage), creep.memory.fufilling.request) === ERR_NOT_IN_RANGE) {
+                        if (creep.transfer(Game.getObjectById(creep.memory.fufilling.storage), creep.memory.fufilling.request) !== OK) {
                             creep.moveTo(Game.getObjectById(creep.memory.fufilling.storage))
                         }
                     }
@@ -112,19 +118,15 @@ function getmasterspawn(creep) {
             type:reqtype,
             amount: am,
             id: building.id,
-            storage: building.room.find(FIND_STRUCTURES, {
-                filter: function (build) {
-                    return build.structureType === STRUCTURE_STORAGE
-                }
-            })[0].id
+            storage: building.room.storage.id
         })
     }
     export function removerequests(building) {
         for(let I in getmasterspawn(building).memory.itemrequests) {
-            console.log("master spawn: "+getmasterspawn(building))
             let info = getmasterspawn(building).memory.itemrequests[I]
             if(info.id===building.id) {
                 getmasterspawn(building).memory.itemrequests.splice(I,1)
+                break
             }
         }
     }

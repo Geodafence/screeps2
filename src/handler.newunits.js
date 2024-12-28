@@ -1,65 +1,147 @@
 import { newid, hauler, combat } from "./role.assign";
 import { remove } from "./libs/general.sourceregistering";
 import { Lremove, partcost } from "./libs/general.functions";
-    export function checkharvwant(ref) {
-        return Game.spawns[ref].room.find(FIND_SOURCES).length+1;
-    }
-    export function newharvcheck(spawnname) {
-        if(global.defenseNeeded >= 1 || global.createdunit == 1) {
-            return
-        }
-        var neededharvs = checkharvwant(spawnname)
-        var allstores = Memory.storecache
-        let allstorescheck = Memory.storecache
-        var allmodules
-        var buildercost
-        var allmodulelevels = [
-            [MOVE,CARRY,WORK],
-            [MOVE,MOVE,CARRY,WORK,WORK],
-            [MOVE,MOVE,CARRY,CARRY,WORK,WORK],
-            [MOVE,MOVE,MOVE,CARRY,WORK,WORK],
-            [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
-            [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
-        ]
-        if(allmodulelevels.length-1 < allstores) {
-            allstores = allmodulelevels.length-1
-        }
-        if(Game.spawns[spawnname].room.controller.level == 1 || (Memory.haulers.length < 2) || Game.spawns[spawnname].memory.harvesters.length < 2) {
-            allstores = 0
-            allstorescheck = allstores
-        }
-        if(global.inDeficit == 1) {
-            allstores = global.deficitLevel
-        }
+/**
+ * @param {String} spawnname name of spawn to run with.
+ *
+ * A simple function that calls all base unit functions
+ */
+export function callunitfunctions(spawnname) {
+    Game.spawns[spawnname].queueCheck()
+    newunitcheck(spawnid);
+    newbuildcheck(spawnid);
+    newhaulercheck(spawnid);
+    newcombatcheck(spawnid);
 
-        allmodules = allmodulelevels[allstores]
-        buildercost = 200+(50*allstores)
-        if(allstores >= 4) {
-            buildercost = 300+(50*allstores)
-        }
-        Memory.harvlevel = allstores
-        if(!(neededharvs > Memory.spawns[spawnname].harvesters.length)) {
+}
+
+/**
+ *
+ * @param {String} spawnname Name of spawn to run with
+ * @param {Array} allmodulelevels A list of modules, sorted by spawn level. Starts at 0 extensions
+ * @param {Object} milestones An object defining extension amounts to use higher level modules.
+ * @param {Object} milestones.any Create by adding a pointer written like this: {(extensionamount): (moduleArray)}.
+ * @param {Object} ifCalls a Object of conditions to see if it should spawn a unit
+ * @param {Boolean} ifCalls.toplevel a conditional called before anything happens, helpful if you want to quickly terminate a unit creation call. Set to 0 if you want no toplevel call
+ * @param {Boolean} ifCalls.unitcheck a conditional called to check if a creep should be spawned, on top of the basic checks to see if you have enough energy. Set to 1 if you have no need
+ * @param {Boolean} ifCalls.deficitcheck a conditional called to check if the spawn should attempt to produce the lowest level unit avilable. Used to restart ecos if something happens. Set to 0 if you have no need for this
+ * @param {String} unitType Type of unit, decides where to append it n stuff
+ * @returns literally nothing lmao
+ *
+ * Example:
+ * newunitcheck("Spawn1", [
+ *  [MOVE,CARRY,WORK],
+ *  [MOVE,MOVE,CARRY,WORK,WORK],
+ *  [MOVE,MOVE,CARRY,CARRY,WORK,WORK],
+ *  [MOVE,MOVE,MOVE,CARRY,WORK,WORK],
+ *  [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
+ *  [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK]
+ *  ],
+ *  {25:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]},
+ * {
+ * toplevel: global.defenseNeeded >= 1 || global.createdunit == 1
+ * unitcheck: neededharvs > Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length
+ * deficitcheck: Game.spawns[spawnname].room.controller.level == 1 || (Memory.haulers.length < 2) || Game.spawns[spawnname].memory.harvesters.length < 2
+ * }
+ * )
+ */
+export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, unitType) {
+    if(global.createdunit===1) {
+        return
+    }
+    if(ifCalls.toplevel) {
+        return
+    }
+    var allstores = Memory.storecache
+    let allstorescheck = Memory.storecache
+    var allmodules
+    if(allmodulelevels.length-1 < allstores) {
+        allstores = allmodulelevels.length-1
+    }
+    if(ifCalls.deficitcheck) {
+        allstores = 0
+        allstorescheck = allstores
+    }
+    if(global.inDeficit == 1) {
+        allstores = global.deficitLevel
+    }
+    allmodules = allmodulelevels[allstores]
+    if(unitType === "harvester") {
+        if(!(checkharvwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)) {
             var endearly = 0
-            for(const I in Memory.spawns[spawnname].harvesters) {
+            for(const I in Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters) {
                 if(!endearly) {
-                    var I2 = Memory.spawns[spawnname].harvesters[I]
+                    var I2 = Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters[I]
                     var data = Memory.creeps[I2]
                     data = {memory: data}
                     var actualcreep = Game.creeps[I2]
                     try {
                     if(data.memory.level < Memory.harvlevel) {
                             remove("usedsources",data)
-                            Memory.spawns[spawnname].harvesters = Lremove(Memory.spawns[spawnname].harvesters,I2)
+                            Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters = Lremove(Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters,I2)
                             actualcreep.suicide()
                             endearly = 1
                     }
-                } catch(e) {
-
-                }
+                } catch(e) {}
                 }
             }
         }
-        if(neededharvs > Memory.spawns[spawnname].harvesters.length) {
+    }
+    for(let am in milestones) {
+        if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
+            allmodules = milestones[am]
+        }
+    }
+    if(unitType==="harvester") Memory.harvlevel = allstores
+
+}
+    export function checkharvwant(ref) {
+        return Game.spawns[ref].room.find(FIND_SOURCES).length+1;
+    }
+    export function newharvcheck(spawnname) {
+        if(global.defenseNeeded >= 20 || global.createdunit == 1) {
+            return
+        }
+        let type = "harv"
+        var neededharvs = checkharvwant(spawnname)
+        var allstores = Memory.storecache
+        let allstorescheck = Memory.storecache
+        if(Game.spawns[spawnname].room.controller.level == 1 || (Memory.haulers.length < 2) || Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length < 2) {
+            allstores = 0
+            allstorescheck = allstores
+        }
+        var allmodules
+        var buildercost
+        if(global.cache[spawnname+"Ucache"+type]===undefined||global.cache[spawnname+"Ucache"+type].extensions!==allstores) {
+            console.log("refreshing spawn cache for "+type+" on spawn "+spawnname)
+            var allmodulelevels = [
+                [MOVE,CARRY,WORK],
+                [MOVE,MOVE,CARRY,WORK,WORK],
+                [MOVE,MOVE,CARRY,CARRY,WORK,WORK],
+                [MOVE,MOVE,MOVE,CARRY,WORK,WORK],
+                [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
+                [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
+            ]
+            if(allmodulelevels.length-1 < allstores) {
+                allstores = allmodulelevels.length-1
+            }
+
+            if(global.inDeficit == 1) {
+                allstores = global.deficitLevel
+            }
+
+            allmodules = allmodulelevels[allstores]
+            buildercost = 200+(50*allstores)
+            if(allstores >= 4) {
+                buildercost = 300+(50*allstores)
+            }
+            global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
+        } else {
+            allmodules=global.cache[spawnname+"Ucache"+type].modules
+            buildercost=global.cache[spawnname+"Ucache"+type].cost
+        }
+        Memory.harvlevel = allstores
+        if(neededharvs > Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length) {
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
                 if(Game.spawns[spawnname].spawning === null) {
                     console.log("ok harvester time")
@@ -70,82 +152,114 @@ import { Lremove, partcost } from "./libs/general.functions";
                 }
             }
         }
-        allmodulelevels = [
-            [MOVE,CARRY,WORK],
-            [MOVE,MOVE,CARRY,WORK,WORK],
-            [MOVE,MOVE,CARRY,CARRY,WORK,WORK],
-            [MOVE,MOVE,MOVE,CARRY,WORK,WORK],
-            [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
-            [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
-        ]
-        var milestones = {25:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]}
-        allmodules = allmodulelevels[allstores]
-        buildercost = partcost(allmodules)
-        for(let am in milestones) {
-            if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
-                allmodules = milestones[am]
-                buildercost = partcost(allmodules)
-            }
-        }
-        if(global.isextractor) {
-            if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
-                if(Memory.spawns[spawnname].minharvs === undefined) {
-                    Memory.spawns[spawnname].minharvs = []
-                }
-                let minerals = Game.spawns[spawnname].room.find(FIND_MINERALS,{filter: function(a) {
-                    return a.mineralAmount > 0
-                }})
-                if(Memory.spawns[spawnname].minharvs && (Memory.haulers.length >= global.haulercreations && Memory.longrangemining[4].creeps.length !== 0)&&(Memory.spawns[spawnname].queen2&&Memory.spawns[spawnname].queen)&&minerals.length>0) {
-                    if(Memory.spawns[spawnname].minharvs.length < 1) {
-                        if(Game.spawns[spawnname].spawning === null) {
-                            global.createdunit = 1
-                            createminharv(allmodules, spawnname)
-                            return
-                        }
-                    }
-                }
-            }
-        }
+
         allstores = Memory.storecache
-        if(global.inDeficit == 1) {
-            allstores = global.deficitLevel
-        }
         allstorescheck = Memory.storecache
-        allmodulelevels = [
-            [MOVE,MOVE,WORK,WORK],
-            [MOVE,WORK,WORK,WORK],
-            [MOVE,MOVE,WORK,WORK,WORK],
-            [MOVE,MOVE,MOVE,WORK,WORK,WORK],
-            [MOVE,WORK,WORK,WORK,WORK],
-            [MOVE,MOVE,WORK,WORK,WORK,WORK],
-            [MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK],
-            [MOVE,WORK,WORK,WORK,WORK,WORK],
-            [MOVE,MOVE,WORK,WORK,WORK,WORK,WORK],
-            [MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK],
-        ]
-        milestones = {20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,WORK,WORK,WORK,WORK,WORK,WORK]}
-        if(allmodulelevels.length-1 < allstores) {
-            allstores = allmodulelevels.length-1
-        }
-        if(Game.spawns[spawnname].room.controller.level == 1 || Memory.haulers.length < 2) {
+        type = "LRM"
+        if(Game.spawns[spawnname].room.controller.level == 1 || (Memory.haulers.length < 2) || global.restartEco !==undefined) {
             allstores = 0
             allstorescheck = allstores
         }
-        allmodules = allmodulelevels[allstores]
-        buildercost = 300+(50*allstores)
-        for(let am in milestones) {
-            if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
-                allmodules = milestones[am]
-                buildercost = partcost(allmodules)
+        if(global.cache[spawnname+"Ucache"+type]===undefined||global.cache[spawnname+"Ucache"+type].extensions!==allstores) {
+
+            if(global.inDeficit == 1) {
+                allstores = global.deficitLevel
             }
+            allmodulelevels = [
+                [MOVE,MOVE,WORK,WORK],
+                [MOVE,WORK,WORK,WORK],
+                [MOVE,MOVE,WORK,WORK,WORK],
+                [MOVE,MOVE,MOVE,WORK,WORK,WORK],
+                [MOVE,WORK,WORK,WORK,WORK],
+                [MOVE,MOVE,WORK,WORK,WORK,WORK],
+                [MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK],
+                [MOVE,WORK,WORK,WORK,WORK,WORK],
+                [MOVE,MOVE,WORK,WORK,WORK,WORK,WORK],
+                [MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK],
+            ]
+            milestones = {
+                20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,WORK,WORK,WORK,WORK,WORK,WORK],
+                30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY]
+            }
+            if(allmodulelevels.length-1 < allstores) {
+                allstores = allmodulelevels.length-1
+            }
+            allmodules = allmodulelevels[allstores]
+            buildercost = 300+(50*allstores)
+            for(let am in milestones) {
+                if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
+                    allmodules = milestones[am]
+                    allstores = am
+                    buildercost = partcost(allmodules)
+                }
+            }
+            global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
+            console.log("refreshing spawn cache for "+type+" on spawn "+spawnname+" with data\n"+JSON.stringify(global.cache[spawnname+"Ucache"+type]))
+        } else {
+            allmodules=global.cache[spawnname+"Ucache"+type].modules
+            buildercost=global.cache[spawnname+"Ucache"+type].cost
         }
-        if(Memory.storedcreeps.length == 0 && Game.spawns[spawnname].memory.builderallocations.upgrade == 2 && (Memory.haulers.length >= global.haulercreations)) {
+        if(Memory.storedcreeps.length == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 1 && (Memory.haulers.length >= global.haulercreations)) {
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
                 if(Game.spawns[spawnname].spawning === null) {
                     console.log("I require miner")
                     global.createdunit = 1
                     createminer(allmodules, spawnname)
                     return
+                }
+            }
+        }
+
+        allstores = Memory.storecache
+        allstorescheck = Memory.storecache
+        type = "minharv"
+
+        if(global.cache[spawnname+"Ucache"+type]===undefined||global.cache[spawnname+"Ucache"+type].extensions!==allstores) {
+            console.log("refreshing spawn cache for "+type+" on spawn "+spawnname)
+            allmodulelevels = [
+                [MOVE,CARRY,WORK],
+                [MOVE,MOVE,CARRY,WORK,WORK],
+                [MOVE,MOVE,CARRY,CARRY,WORK,WORK],
+                [MOVE,MOVE,MOVE,CARRY,WORK,WORK],
+                [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
+                [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
+            ]
+            var milestones = {25:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]}
+            allmodules = allmodulelevels[allstores]
+            buildercost = partcost(allmodules)
+            for(let am in milestones) {
+                if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
+                    allmodules = milestones[am]
+                    buildercost = partcost(allmodules)
+                }
+            }
+            allstores = allstorescheck
+            global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
+        } else {
+            allmodules=global.cache[spawnname+"Ucache"+type].modules
+            buildercost=global.cache[spawnname+"Ucache"+type].cost
+        }
+        if(Game.spawns[spawnname].room.controller.level == 1 || Memory.haulers.length < 2 || global.restartEco!==undefined) {
+            allstores = 0
+            allstorescheck = allstores
+        }
+
+        if(global.isextractor) {
+            if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
+                if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs === undefined) {
+                    Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs = []
+                }
+                let minerals = Game.spawns[spawnname].room.find(FIND_MINERALS,{filter: function(a) {
+                    return a.mineralAmount > 0
+                }})
+                if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs && (Memory.haulers.length >= global.haulercreations && Memory.longrangemining[4].creeps.length !== 0)&&(Game.spawns[spawnname].room.getMasterSpawn().memory.queen2&&Game.spawns[spawnname].room.getMasterSpawn().memory.queen)&&minerals.length>0) {
+                    if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs.length < 1) {
+                        if(Game.spawns[spawnname].spawning === null) {
+                            global.createdunit = 1
+                            createminharv(allmodules, spawnname)
+                            return
+                        }
+                    }
                 }
             }
         }
@@ -156,10 +270,10 @@ import { Lremove, partcost } from "./libs/general.functions";
             memory: {level: Memory.harvlevel}
         })
         if(errorreg == 0) {
-            if(Memory.spawns[spawnname].minharvs === undefined) {
-                Memory.spawns[spawnname].minharvs = []
+            if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs === undefined) {
+                Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs = []
             }
-            Memory.spawns[spawnname].minharvs.push(test)
+            Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs.push(test)
         }
         return errorreg
     }
@@ -169,7 +283,7 @@ import { Lremove, partcost } from "./libs/general.functions";
             memory: {level: Memory.harvlevel}
         })
         if(errorreg == 0) {
-            Memory.spawns[spawnname].harvesters.push(test)
+            Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.push(test)
         }
         return errorreg
     }
@@ -181,48 +295,71 @@ import { Lremove, partcost } from "./libs/general.functions";
         }
     }
     export function checkbuildwant(ref) {
-        return Game.spawns[ref].room.find(FIND_SOURCES).length*2+1
+        if(Game.spawns[ref].room.controller.level>4) {
+            return 3
+        } else {
+            return Game.spawns[ref].room.find(FIND_SOURCES).length*2+1
+        }
     }
     export function newbuildcheck(spawnname) {
-        if(global.createdunit == 1 || global.defenseNeeded >= 1) {
+        if(global.createdunit == 1 || global.defenseNeeded >= 20) {
             return
         }
+        var type = "builder"
         var allstores = Memory.storecache
         var allstorescheck = Memory.storecache
         var allmodules
         var buildercost
-        var allmodulelevels = [
-            [WORK, WORK, CARRY, MOVE],
-            [WORK, WORK, CARRY, MOVE, MOVE],
-            [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
-            [WORK, WORK, CARRY,CARRY,MOVE, MOVE, MOVE],
-            [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
-            [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE],
-            [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
-        ]
-        var milestones = {
-            //30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
-        }
-        if(allmodulelevels.length-1 < allstores) {
-            allstores = allmodulelevels.length-1
-        }
         if(Game.spawns[spawnname].room.controller.level == 1) {
             allstores = 0
             allstorescheck = allstores
         }
-        allmodules = allmodulelevels[allstores]
-        buildercost = 300+(50*allstores)
-        for(let am in milestones) {
-            if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
-                allmodules = milestones[am]
-                allstores = allstorescheck
-                buildercost = partcost(allmodules)
+        if(global.cache[spawnname+"Ucache"+type]===undefined||global.cache[spawnname+"Ucache"+type].extensions!==allstores) {
+            console.log("refreshing spawn cache for "+type+" on spawn "+spawnname+" with level "+allstores)
+
+            var allmodulelevels = [
+                [WORK, CARRY, MOVE, MOVE],
+                [WORK, WORK, CARRY, MOVE, MOVE],
+                [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
+                [WORK, WORK, CARRY,CARRY,MOVE, MOVE, MOVE],
+                [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
+                [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE],
+                [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
+            ]
+            if(Game.spawns[spawnname].room.controller.level>4) {
+                var milestones = {
+                    20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                    //30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                }
+            } else {
+                var milestones = {
+                    //20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                    //30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                }
             }
+            if(allmodulelevels.length-1 < allstores) {
+                allstores = allmodulelevels.length-1
+            }
+
+            allmodules = allmodulelevels[allstores]
+            buildercost = 300+(50*allstores)
+            for(let am in milestones) {
+                if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
+                    allmodules = milestones[am]
+
+                    buildercost = partcost(allmodules)
+                }
+            }
+            allstores = allstorescheck
+            global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
+        } else {
+            allmodules=global.cache[spawnname+"Ucache"+type].modules
+            buildercost=global.cache[spawnname+"Ucache"+type].cost
         }
         Memory.builderlevel = allstores
         if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
-            if(checkbuildwant(spawnname) > Memory.spawns[spawnname].builders.length) {
-                if((checkharvwant(spawnname) <= Memory.spawns[spawnname].harvesters.length) ||(Game.spawns[spawnname].memory.builderallocations.upgrade == 0 && Memory.spawns[spawnname].harvesters.length != 0)) {
+            if(checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length) {
+                if((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length) ||(Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
                     if(Game.spawns[spawnname].spawning == null) {
                         global.createdunit = 1
                         createbuild(spawnname, allmodules)
@@ -246,56 +383,71 @@ import { Lremove, partcost } from "./libs/general.functions";
         }
     }
     export function newhaulercheck(spawnname) {
-        if(global.createdunit == 1 || global.defenseNeeded >= 1) {
+        if(global.createdunit == 1 || global.defenseNeeded >= 20) {
             return
         }
+        var type = "hauler"
         var allstores = Memory.storecache
         var allmodules
         var buildercost
         let allstorescheck = Memory.storecache
-        var allmodulelevels = [
-            [CARRY,CARRY,CARRY,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-        ]
-        var milestones = {
-            20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY],
-            //after testing again, return on investment is absolutely not worthwhile at this point in time
-            //30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
-        }
-        if(global.inDeficit == 1) {
-            allstores = global.deficitLevel
-        }
-        if(allmodulelevels.length-1 < allstores) {
-            allstores = allmodulelevels.length-1
-        }
-        if(Game.spawns[spawnname].room.controller.level == 1|| (Memory.haulers.length < 4)) {
+        if(Game.spawns[spawnname].room.controller.level == 1 ||
+            (Memory.haulers.length < 4) ||
+            (Game.spawns[spawnname].room.storage && Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined && Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined) ||
+            global.restartEco!==undefined
+        ) {
             allstores = 0
             allstorescheck = allstores
         }
-        allmodules = allmodulelevels[allstores]
-        buildercost = allmodules.length*50
-        for(let am in milestones) {
-            if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
-                allstores=am
-                allmodules = milestones[am]
-                buildercost = partcost(allmodules)
+        if(global.cache[spawnname+"Ucache"+type]===undefined||global.cache[spawnname+"Ucache"+type].extensions!==allstores) {
+            console.log("refreshing spawn cache for "+type+" on spawn "+spawnname)
+            var allmodulelevels = [
+                [CARRY,CARRY,CARRY,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                [CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+            ]
+            var milestones = {
+                20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY],
+                //after testing again, return on investment is absolutely not worthwhile at this point in time
+                //EDIT: due to cpu costs, I need to use this
+                //EDIT EDIT: this kills eco, why??????
+                //EDIT EDIT EDIT: ima try this again, fuck you past Geo
+                30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
             }
+            if(global.inDeficit == 1) {
+                allstores = global.deficitLevel
+            }
+            if(allmodulelevels.length-1 < allstores) {
+                allstores = allmodulelevels.length-1
+            }
+            allmodules = allmodulelevels[allstores]
+            buildercost = allmodules.length*50
+            for(let am in milestones) {
+                if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
+                    allmodules = milestones[am]
+                    buildercost = partcost(allmodules)
+                }
+            }
+            allstores = allstorescheck
+            global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
+        } else {
+            allmodules=global.cache[spawnname+"Ucache"+type].modules
+            buildercost=global.cache[spawnname+"Ucache"+type].cost
         }
         if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
-            if(((Memory.spawns[spawnname].queen === undefined&&Memory.haulers.length>3) || (Memory.spawns[spawnname].queen2 === undefined&&global.restartEco===undefined))&& Game.spawns[spawnname].room.controller.level > 3&&Game.spawns[spawnname].room.storage) {
+            if(((Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined) || (Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined&&global.restartEco===undefined))&& Game.spawns[spawnname].room.controller.level > 3&&Game.spawns[spawnname].room.storage&&Memory.haulers.length>3) {
                     if(Game.spawns[spawnname].spawning == null) {
                         global.createdunit = 1
                         createqueen(spawnname, allmodules)
@@ -303,18 +455,20 @@ import { Lremove, partcost } from "./libs/general.functions";
                     }
                 }
         }
-        if(Memory.haulerlevel <= Memory.storecache) {
-            if((Math.ceil((Memory.haulerneeded+(allmodules.length/2))/(allmodules.length/2)/3)) >= Memory.haulers.length) {
-                global.restartEco = spawnname
+        if(Memory.haulerlevel <= allstores||global.restartEco!==undefined) {
+            if((Math.ceil((Memory.haulerneeded+(allmodules.length/2))/(allmodules.length/2)/3)) >= Memory.haulers.length&&Game.spawns[spawnname].room.controller.level>=4) {
+                global.restartEco = Game.spawns[spawnname]
             } else {
                 global.restartEco = undefined
             }
 
-            Memory.haulerlevel = Memory.storecache
+            Memory.haulerlevel = allstores
 
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost && Memory.haulers.length < Math.ceil((Memory.haulerneeded+(allmodules.length/2))/(allmodules.length/2))) {
-            if(checkbuildwant(spawnname) <= Memory.spawns[spawnname].builders.length &&(Memory.haulers.length < 3 || (Memory.spawns[spawnname].queen !== undefined||Game.spawns[spawnname].room.controller.level <= 3))) {
-                if((checkharvwant(spawnname) <= Memory.spawns[spawnname].harvesters.length)) {
+            if(Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade>=1 ||
+            (Memory.haulers.length < 3 || (Game.spawns[spawnname].room.getMasterSpawn().memory.queen !== undefined || Game.spawns[spawnname].room.controller.level <= 3))) {
+                console.log("HEHEHEHA GRRRR "+spawnname)
+                if((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)) {
                     if(Game.spawns[spawnname].spawning == null) {
                             global.createdunit = 1
                             createhauler(spawnname, allmodules)
@@ -326,7 +480,7 @@ import { Lremove, partcost } from "./libs/general.functions";
         }
     }
     export function newcombatcheck(spawnname) {
-        if((global.createdunit == 1|| global.defenseNeeded < 1)&&Game.flags.attack === undefined) {
+        if((global.createdunit == 1|| global.defenseNeeded < 20)&&Game.flags.attack === undefined) {
             return
         }
         var allstores = Memory.storecache
@@ -364,9 +518,9 @@ import { Lremove, partcost } from "./libs/general.functions";
             }
         }
         Memory.combatlevel = allstores
-        if((Game.spawns[spawnname].room.energyAvailable >= buildercost) && (Memory.storedcreeps.length >= 1|| global.defenseNeeded >= 1)) {
-            if((checkbuildwant(spawnname)<= Memory.spawns[spawnname].builders.length && Memory.fighters.length < 12)|| global.defenseNeeded >= 1) {
-                if((checkharvwant(spawnname) <= Memory.spawns[spawnname].harvesters.length)|| global.defenseNeeded >= 1) {
+        if((Game.spawns[spawnname].room.energyAvailable >= buildercost) && (Memory.storedcreeps.length >= 1|| global.defenseNeeded >= 20)) {
+            if((checkbuildwant(spawnname)<= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length && Memory.fighters.length < 12)) {
+                if((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)|| global.defenseNeeded >= 20) {
                     if(Game.spawns[spawnname].spawning == null) {
                         global.createdunit = 1
                         console.log(createcombat(spawnname, allmodules))
@@ -412,10 +566,10 @@ import { Lremove, partcost } from "./libs/general.functions";
         })
         console.log("errorlog: "+errorreg)
         if(errorreg == 0) {
-            if(Memory.spawns[spawnname].queen === undefined) {
-                Memory.spawns[spawnname].queen = test
-            } else if(Memory.spawns[spawnname].queen2 === undefined) {
-                Memory.spawns[spawnname].queen2 = test
+            if(Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined) {
+                Game.spawns[spawnname].room.getMasterSpawn().memory.queen = test
+            } else if(Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined) {
+                Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 = test
             }
         }
     }
@@ -438,7 +592,7 @@ import { Lremove, partcost } from "./libs/general.functions";
         })
         console.log("errorlog: "+errorreg)
         if(errorreg == 0) {
-            Memory.spawns[spawnname].builders.push(test)
+            Game.spawns[spawnname].room.getMasterSpawn().memory.builders.push(test)
         }
     }
     export function createcombat(spawnname, moduledata) {

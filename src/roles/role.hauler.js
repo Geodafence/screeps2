@@ -105,7 +105,11 @@ export function tick(creep, focuson) {
             }
             */
             let val = focuson;
-            creep.memory.spawnid = Game.spawns[val].id;
+            if(Game.spawns[val]) {
+                creep.memory.spawnid = Game.spawns[val].id;
+            } else {
+                creep.say("bad spawn")
+            }
         }
         new RoomVisual(creep.room.name).text(
             "Hauler, grabbing from room: " + creep.memory.patrolling.room,
@@ -138,7 +142,7 @@ export function tick(creep, focuson) {
                 Memory.defenserequests.push({ x: creep.pos.x, y: creep.pos.y, room: creep.room.name });
             }
             creep.memory.endearly += 1;
-            global.defenseNeeded = 20;
+            global.defenseNeeded = 40;
             return;
         }
 
@@ -152,7 +156,9 @@ export function tick(creep, focuson) {
         if (creep.memory.targetCreeps.length == 0) {
             creep.memory.endearly += 5;
         }
-
+        if (global.restartEco !== undefined) {
+            creep.memory.spawnid = restartEco.id;
+        }
         if (creep.memory.patrolling.room !== creep.room.name && creep.memory.moving == false) {
             //if(creep.memory.targetCreeps.length > 0) {
             //    if(creep.memory.targetCreeps[0] in Memory.LRMpaths) {
@@ -195,13 +201,6 @@ export function tick(creep, focuson) {
                 creep.memory.moving = true;
             }
         } else {
-            if (global.restartEco !== undefined) {
-                if (Game.spawns[global.restartEco]) {
-                    creep.memory.spawnid = Game.spawns[global.restartEco].id;
-                } else {
-                    console.log("spawn doesn't exist!");
-                }
-            }
             if (creep.store[RESOURCE_ENERGY] == 0) {
                 creep.memory.moving = false;
                 creep.memory.patrolling = undefined;
@@ -236,14 +235,14 @@ export function tick(creep, focuson) {
                     Game.getObjectById(creep.memory.cachsource))
             ) {
                 let temp = Game.getObjectById(creep.memory.spawnid)
-                    .room.find(FIND_STRUCTURES, {
+                    .room.find(FIND_MY_STRUCTURES, {
                         filter: structure => {
                             return (
                                 (structure.structureType == STRUCTURE_EXTENSION ||
                                     structure.structureType == STRUCTURE_SPAWN ||
                                     (Memory.haulers.length > 6 && structure.structureType == STRUCTURE_STORAGE) ||
                                     (Memory.haulers.length > 6 && structure.structureType == STRUCTURE_TOWER)) &&
-                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0&&structure.isActive()
                             );
                         }
                     })
@@ -286,7 +285,6 @@ export function tick(creep, focuson) {
                         creep.moveTo(Game.getObjectById(creep.memory.cachsource), {
                             reusePath: 90,
                             visualizePathStyle: { stroke: "#ffffff" },
-                            maxOps:1200
                         });
                     }
                 }

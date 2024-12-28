@@ -46,8 +46,12 @@ function getMasterLink(masterSpawn) {
             if(target) {
                 let amog = getMasterLink(creep.room.getMasterSpawn())
                 if(amog) {
-                    if(amog.store[RESOURCE_ENERGY]>creep.store.getCapacity()) {
-                        target = [getMasterLink(creep.room.getMasterSpawn())]
+                    let grab = creep.store.getCapacity()
+                    if(creep.store.getCapacity()>750) {
+                        grab = 750
+                    }
+                    if(amog.store[RESOURCE_ENERGY]>=grab) {
+                        target = [getMasterLink(creep.room.getMasterSpawn())] //yo future geo don't remove the [], it needs to be a array
                     }
                 }
                     target = target[0]
@@ -59,10 +63,10 @@ function getMasterLink(masterSpawn) {
                     }
             }
         } else {
-            var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            var target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) &&
-                        structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                        structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0&&structure.isActive();
                 }
             })
             if(creep.room.find(FIND_STRUCTURES, {
@@ -78,10 +82,10 @@ function getMasterLink(masterSpawn) {
             }
             if(target) {
             } else {
-                target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || structure.structureType == STRUCTURE_TOWER) &&
-                            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 500;
+                            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 500&&structure.isActive();
                     }
                 })
                 if(!target) {

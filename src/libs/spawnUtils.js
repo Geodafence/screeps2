@@ -90,7 +90,21 @@ Creep.prototype.placeRoadByPath = function(path,Suceedstorage) {
     this.memory["_"+Suceedstorage]={p:path,s:t}
 }
 Room.prototype.getMasterSpawn = function() {
-    return this.find(FIND_MY_SPAWNS)[0]
+    if(this.memory.masterspawn !== undefined) {
+        return Game.getObjectById(this.memory.masterspawn)
+    }
+    let spawns = this.find(FIND_MY_SPAWNS)
+    if(spawns.length===0) {
+        return null
+    }
+    for(let spawn in spawns) {
+        if(spawns[spawn].memory.harvesters !== undefined) {
+            this.memory.masterspawn = spawns[spawn].id
+            return Game.getObjectById(this.memory.masterspawn)
+        }
+    }
+    this.memory.masterspawn = spawns[0].id
+    return Game.getObjectById(this.memory.masterspawn)
 }
 Creep.prototype.dynamicReuse = function() {
     let re = 40

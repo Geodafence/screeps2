@@ -57,7 +57,7 @@ import { Lremove } from "../libs/general.functions";
 
         // If the creep is not in range, move it towards the source
         if(errlog == ERR_NOT_IN_RANGE) {
-            creep.moveTo(sourceid, {reusePath: 30, visualizePathStyle: {stroke: '#ffffff'},maxOps:500});
+            creep.moveTo(sourceid, {reusePath: 30, visualizePathStyle: {stroke: '#ffffff'}});
         }
         return errlog
     }

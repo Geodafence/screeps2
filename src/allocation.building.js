@@ -28,15 +28,17 @@ import { remove, register as _register, harvest } from "./libs/general.sourcereg
         if(creep.memory.building) {
             // Find construction sites in the room
             var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
-
+            let emergancyrepair = creep.room.find(FIND_STRUCTURES,{filter: (struct) => struct.hits < struct.hitsMax*0.25&&struct.structureType!==STRUCTURE_RAMPART&&struct.structureType!==STRUCTURE_WALL})
             // If construction sites are available, build at the nearest site
-            if(targets.length) {
+            if(targets.length&&emergancyrepair.length===0) {
                 if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(targets[0], {reusePath: 40, visualizePathStyle: {stroke: '#8f02f4'}});
                 }
-            }
-            // If no construction sites, perform extra task (repair or upgrade)
-            else {
+            } else {
+                if(emergancyrepair.length>0) {
+                    creep.memory.extratask = "repairing"
+                }
+                // If no construction sites, perform extra task (repair or upgrade)
                 if(creep.memory.extratask == "repairing") {
                     // Find damaged structures in the room
                     const targets = creep.room.find(FIND_STRUCTURES, {
