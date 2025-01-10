@@ -1,4 +1,4 @@
-import { partcost } from "../libs/general.functions"
+import { partcost,getTrueDistance } from "../libs/general.functions"
 import { newid } from "../role.assign"
 StructureSpawn.prototype.queueCheck = function() {
     if(this.memory.queue === undefined) {
@@ -88,6 +88,17 @@ Creep.prototype.placeRoadByPath = function(path,Suceedstorage) {
             }
     }
     this.memory["_"+Suceedstorage]={p:path,s:t}
+}
+Room.prototype.getNearbyActive = function() {
+    let retVal = []
+    for(let roomT in Game.rooms) {
+        let room = Game.rooms[roomT]
+        let dist = Math.round(getTrueDistance(new RoomPosition(25,25,this.name),new RoomPosition(25,25,room.name))/50)
+        if(dist<=1) {
+            retVal.push(room)
+        }
+    }
+    return retVal
 }
 Room.prototype.getMasterSpawn = function() {
     if(this.memory.masterspawn !== undefined) {

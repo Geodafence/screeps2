@@ -23,11 +23,11 @@ import { remove } from "../libs/general.sourceregistering";
                 Game.spawns[spawnname].memory.builderallocations.general += 1
             }
         } else {
-            if(Game.spawns[spawnname].memory.builderallocations.upgrade < 2 && creep.memory.task == undefined) {
+            if(Game.spawns[spawnname].memory.builderallocations.upgrade < 4 && creep.memory.task == undefined) {
                 creep.memory.task = 'upgrade'
                 Game.spawns[spawnname].memory.builderallocations.upgrade += 1
             }
-            if(Game.spawns[spawnname].memory.builderallocations.general < 3 && creep.memory.task == undefined) {
+            if(Game.spawns[spawnname].memory.builderallocations.general < 4 && creep.memory.task == undefined) {
                 creep.memory.task = 'general'
                 Game.spawns[spawnname].memory.builderallocations.general += 1
             }

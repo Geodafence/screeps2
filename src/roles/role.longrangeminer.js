@@ -27,7 +27,8 @@ function reverseDirectionTo(target) {
                     // Get room information and mining data from memory
                     let RoomObject = Memory.miningrooms[temp];
                     let info = Memory.longrangemining[temp];
-
+                    let mapVisual = new RoomPosition(0,0,RoomObject.room)
+                    Game.map.visual.rect(mapVisual,50,50,{fill:"transparent",stroke:"#F57F17",strokeWidth:2})
                     // Initialize mining data if it doesn't exist
                     if (info == undefined) {
                         info = { creeps: [], sources: [], wantcreeps: 0 };
@@ -81,13 +82,19 @@ function reverseDirectionTo(target) {
                                     remove("sources", creepmem, true, Memory.longrangemining[temp]);
                                 } catch (e) { console.log("Error at line 68 of longrangeharvesting: " + e) }
                                 Memory.longrangemining[temp].creeps = Lremove(Memory.longrangemining[temp].creeps, Cname);
-                                continue;
+                                break;
                             }
                             new RoomVisual(creep.room.name).text('LRM, mining for room: ' + RoomObject.room, creep.pos.x, creep.pos.y + 1, { align: 'center', font: 0.3, color: 'blue', stroke: "white", strokeWidth: 0.01 });
+                            if(creep.memory.registeredsource!==undefined) {
+                                Game.map.visual.line(creep.pos,Game.getObjectById(creep.memory.registeredsource).pos,{opacity:1});
+                                let color = "#ff0000"
+                                if(creep.memory.check===1) color = "#439D47"
+                                Game.map.visual.circle(Game.getObjectById(creep.memory.registeredsource).pos,{fill: color, radius: 1, stroke: color,opacity:1})
+                            }
                             if(allsettled) {
                                 if (creep.ticksToLive > 10) {
                                     // Register creep to a source and initiate harvesting
-                                    if(global.timer%2===0) {
+                                    if(global.timer%2===0&&creep.getActiveBodyparts(WORK)>=12) {
                                         continue
                                     }
                                     if (harvest(creep) == OK) {
@@ -125,7 +132,7 @@ function reverseDirectionTo(target) {
                             if(creep.memory.check===1) {
                                 if (creep.ticksToLive > 10) {
                                     creep.memory.state="mining"
-                                    if(global.timer%2===0) {
+                                    if(global.timer%2===0&&creep.getActiveBodyparts(WORK)>=12) {
                                         continue
                                     }
                                     // Register creep to a source and initiate harvesting
@@ -177,7 +184,7 @@ function reverseDirectionTo(target) {
                                     //}
 
                                 } else {
-                                    if(global.timer%2===0&&creep.memory.check === 1) {
+                                    if(global.timer%2===0&&creep.memory.check === 1&&creep.getActiveBodyparts(WORK)>=12) {
                                         continue
                                     }
                                     info = _register("sources", creep, true, Memory.longrangemining[temp]);
