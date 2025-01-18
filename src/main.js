@@ -368,7 +368,6 @@ export function loop () {
         Memory.haulers = room.memory.haulers
         Memory.miningrooms = global.miningroomsReset
     }
-
     if(Game.cpu.bucket >= 2000) {
         for(let temp in Memory.claimers) {
             let claimer = Game.creeps[Memory.claimers[temp]]

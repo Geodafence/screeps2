@@ -488,6 +488,14 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                 }
             }
         }
+        if(Game.spawns[spawnname].room.energyAvailable >= buildercost&&Game.spawns[spawnname].room.controller.level<6) {
+            if(Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill===undefined&&checkbuildwant(spawnname)<=Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length) {
+                if(Game.spawns[spawnname].spawning == null) {
+                    global.createdunit = 1
+                    createUpgradeRefill(spawnname,allmodules)
+                }
+            }
+        }
     }
     export function newcombatcheck(spawnname) {
         if((global.createdunit == 1|| global.defenseNeeded < 20)&&Game.flags.attack === undefined) {
