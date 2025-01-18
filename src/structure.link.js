@@ -25,7 +25,7 @@ function getMasterLink(masterSpawn) {
             link.transferEnergy(masterLink)
         }
         if(link.store[RESOURCE_ENERGY]>700) {
-            if(containsRequest(link.room.getMasterSpawn(),link.id)===false) {
+            if(link.room.getMasterSpawn().memory.itemrequests.length===0) {
                 sendrequest(link,700,RESOURCE_ENERGY,"take");
             }
         } else {

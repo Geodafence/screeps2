@@ -53,12 +53,14 @@ import { remove, register as _register, harvest } from "./libs/general.sourcereg
                         if(creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
                             creep.moveTo(targets[0],{reusePath: 40});
                         }
+                    } else {
+                        creep.memory.extratask = "upgrading"
                     }
 
                 } else {
                     // If the extra task is upgrading, move to and upgrade the room controller
+                    creep.moveTo(creep.room.controller, {reusePath: 40, visualizePathStyle: {stroke: '#f46f02'}});
                     if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                        creep.moveTo(creep.room.controller, {reusePath: 40, visualizePathStyle: {stroke: '#f46f02'}});
                     }
                 }
             }
@@ -66,8 +68,8 @@ import { remove, register as _register, harvest } from "./libs/general.sourcereg
             //they use too much from the storages
 			var targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
-                    return (structure.structureType == STRUCTURE_STORAGE) &&
-                        structure.store[RESOURCE_ENERGY] > 100000;
+                    return (structure.structureType == STRUCTURE_STORAGE && structure.store[RESOURCE_ENERGY] > 100000) ||
+                    (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.controller.level<4)
                 }
         	});
 			if(targets.length > 0) {

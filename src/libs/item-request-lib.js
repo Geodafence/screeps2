@@ -1,7 +1,4 @@
 
-function getmasterspawn(creep) {
-    return creep.room.find(FIND_MY_SPAWNS)[0]
-}
     export function containsRequest(spawn,buildId,type=null,amount=null) {
         let ret = false
         for(let I in spawn.memory.itemrequests) {
@@ -20,16 +17,16 @@ function getmasterspawn(creep) {
      * @param {Creep} creep
     **/
     export function getrequest(creep) {
-        if(getmasterspawn(creep).memory.itemrequests===undefined) {
-            getmasterspawn(creep).memory.itemrequests = []
+        if(creep.room.getMasterSpawn().memory.itemrequests===undefined) {
+            creep.room.getMasterSpawn().memory.itemrequests = []
         }
-        if (getmasterspawn(creep).memory.itemrequests.length > 0) {
+        if (creep.room.getMasterSpawn().memory.itemrequests.length > 0) {
             if (creep.memory.fufilling === undefined) {
-                creep.memory.fufilling = getmasterspawn(creep).memory.itemrequests.pop()
+                creep.memory.fufilling = creep.room.getMasterSpawn().memory.itemrequests.pop()
             }
 
             if ((creep.memory.type==="grab"&&Game.getObjectById(creep.memory.fufilling.storage).store[creep.memory.fufilling.request] < creep.memory.fufilling.amount)||(creep.memory.type==="take"&&Game.getObjectById(creep.memory.fufilling.id).store[creep.memory.fufilling.request] < creep.memory.fufilling.amount)) {
-                getmasterspawn(creep).memory.itemrequests.push(creep.memory.fufilling)
+                creep.room.getMasterSpawn().memory.itemrequests.push(creep.memory.fufilling)
                 creep.memory.fufilling = undefined
             }
         }
@@ -113,7 +110,7 @@ function getmasterspawn(creep) {
      * @param {String} reqtype type of request, "grab" (bring to) or "take" (remove)
      */
     export function sendrequest (building, am, type,reqtype="grab") {
-        getmasterspawn(building).memory.itemrequests.splice(0, 0, {
+        building.room.getMasterSpawn().memory.itemrequests.splice(0, 0, {
             request: type,
             type:reqtype,
             amount: am,
@@ -122,10 +119,10 @@ function getmasterspawn(creep) {
         })
     }
     export function removerequests(building) {
-        for(let I in getmasterspawn(building).memory.itemrequests) {
-            let info = getmasterspawn(building).memory.itemrequests[I]
+        for(let I in building.room.getMasterSpawn().memory.itemrequests) {
+            let info = building.room.getMasterSpawn().memory.itemrequests[I]
             if(info.id===building.id) {
-                getmasterspawn(building).memory.itemrequests.splice(I,1)
+                building.room.getMasterSpawn().memory.itemrequests.splice(I,1)
                 break
             }
         }

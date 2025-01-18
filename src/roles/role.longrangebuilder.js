@@ -5,10 +5,26 @@ export function tick(creep) {
     if (creep.memory.room !== undefined) {
         if (creep.store[RESOURCE_ENERGY] == 0) {
             creep.memory.state = "moving";
+            if(creep.memory.didDetour===1) creep.memory.didDetour=undefined
         }
         if (creep.memory.state == "moving" && creep.store.getFreeCapacity() == 0) {
             creep.memory.state = "building";
+            if(creep.memory.didDetour===20) creep.memory.didDetour=undefined
         }
+        if (creep.memory.state == "building") {
+            if(creep.memory.room==="E5S31") {
+                if(creep.memory.didDetour!==1) {
+                    creep.memory.room="E5S33"
+                }
+            }
+            if(creep.memory.room==="E5S33") {
+                if(creep.room.name===creep.memory.room) {
+                    creep.memory.room="E5S31"
+                    creep.memory.didDetour=1
+                }
+            }
+        }
+        if(creep.memory.didDetour===undefined) creep.memory.didDetour=0
         if (creep.memory.state == "building") {
             if (creep.memory.room !== creep.room.name) {
                 let moveto = new RoomPosition(25, 25, creep.memory.room);
@@ -35,6 +51,13 @@ export function tick(creep) {
                 }
             }
         } else {
+            if(Game.getObjectById(creep.memory.spawnid).room.name==="E7S33"&&creep.memory.room==="E5S31") {
+                if(creep.memory.didDetour<=20) {
+                    creep.moveTo(new RoomPosition(25,25,"E5S33"))
+                    if(creep.room.name==="E5S33") creep.memory.didDetour += 2
+                    return
+                }
+            }
             let debug = Game.getObjectById(creep.memory.spawnid).pos.findClosestByRange(FIND_MY_STRUCTURES, {
                 filter: function (struct) {
                     return struct.structureType == STRUCTURE_STORAGE;

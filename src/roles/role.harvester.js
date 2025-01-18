@@ -23,12 +23,21 @@ import { filter } from "lodash";
                 creep.memory.state = "mining"
             }
             remove("usedsources", creep)
-            var targets = creep.room.find(FIND_MY_STRUCTURES, {
+            if(Memory.longrangemining.length>0) {
+                var targets = creep.room.find(FIND_MY_STRUCTURES, {
+                        filter: (structure) => {
+                            return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||  (Memory.longrangemining[Memory.longrangemining.length-1].creeps.length > 0 && structure.structureType == STRUCTURE_STORAGE)|| (Memory.longrangemining[Memory.longrangemining.length-1].creeps.length > 0 && structure.structureType == STRUCTURE_TOWER)) &&
+                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && structure.isActive();
+                        }
+                });
+            } else {
+                var targets = creep.room.find(FIND_MY_STRUCTURES, {
                     filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||  (Memory.longrangemining[4].creeps.length > 0 && structure.structureType == STRUCTURE_STORAGE)|| (Memory.longrangemining[4].creeps.length > 0 && structure.structureType == STRUCTURE_TOWER)) &&
+                        return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||  (structure.structureType == STRUCTURE_STORAGE)|| (structure.structureType == STRUCTURE_TOWER)) &&
                             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && structure.isActive();
                     }
             });
+            }
             targets.sort((a, b) => (a.structureType == STRUCTURE_STORAGE || a.structureType == STRUCTURE_TOWER) - (b.structureType == STRUCTURE_STORAGE || b.structureType == STRUCTURE_TOWER));
             if(creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep) {
                 return creep.owner.username !== "chungus3095"

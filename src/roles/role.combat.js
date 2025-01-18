@@ -90,12 +90,14 @@ function combatCalc(creep,target) {
      */
     export function run(creep) {
         if(Game.flags.attack === undefined) {
-            if(global.defenseNeeded <= 0) {
-                creep.suicide()
-            }
             var closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep) {
                 return creep.owner.username !== "chungus3095"
             }});
+            if(!closestHostile) {
+                closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES,{filter: function(creep) {
+                    return creep.owner.username !== "chungus3095"
+                }});
+            }
             if (closestHostile) {
                 creep.memory.stopmoving = 0;
                 combatCalc(creep, closestHostile)
@@ -109,8 +111,8 @@ function combatCalc(creep,target) {
                 var targetRoom;
                 var targetCreep
                 do {
-                    targetRoom = Memory.longrangemining[Math.floor(Math.random() * Memory.miningrooms.length)];
-                    targetCreep = targetRoom.creeps[Math.floor(Math.random() * targetRoom.creeps.length)]
+                    targetRoom = Memory.miningrooms[Math.floor(Math.random() * Memory.miningrooms.length)];
+                    targetCreep = new RoomPosition(25,25,targetRoom.room)
                 } while (targetRoom === creep.memory.lastRoom);
 
                 creep.memory.targetCreep = targetCreep
@@ -120,10 +122,6 @@ function combatCalc(creep,target) {
                 creep.memory.wait = 0;
                 creep.memory.TX = undefined
             }
-            if(Game.creeps[creep.memory.targetCreep] === undefined) {
-                creep.memory.patrolling = undefined
-                return
-            }
             if((creep.memory.defenseoverride == 0 || creep.memory.defenseoverride === undefined)&&Memory.defenserequests.length > 0) {
                 let respond = Memory.defenserequests.pop()
                 creep.memory.TX = respond.x; creep.memory.TY = respond.y
@@ -131,10 +129,10 @@ function combatCalc(creep,target) {
                 creep.memory.defenseoverride = 1
                 creep.memory.wait=0
             }
-            if(creep.memory.roomname === undefined) creep.memory.roomname = Game.creeps[creep.memory.targetCreep].room.name
+            if(creep.memory.roomname === undefined) creep.memory.roomname = creep.memory.patrolling.room
             if(creep.memory.TX === undefined) {
-                creep.memory.TX = Game.creeps[creep.memory.targetCreep].pos.x
-                creep.memory.TY = Game.creeps[creep.memory.targetCreep].pos.y
+                creep.memory.TX = 25
+                creep.memory.TY = 25
             }
             creep.moveTo(new RoomPosition(creep.memory.TX,creep.memory.TY,creep.memory.roomname),{reusePath: 100,stroke: '#ff0000'})
             creep.memory.wait+=1

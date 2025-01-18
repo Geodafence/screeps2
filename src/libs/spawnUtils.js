@@ -1,4 +1,4 @@
-import { partcost } from "../libs/general.functions"
+import { partcost,getTrueDistance } from "../libs/general.functions"
 import { newid } from "../role.assign"
 StructureSpawn.prototype.queueCheck = function() {
     if(this.memory.queue === undefined) {
@@ -31,7 +31,7 @@ StructureSpawn.prototype.queueCheck = function() {
                     console.log("dryrun worked, creating fr")
                 global.createdunit = 1
                 if(this.memory.queue[0].is == "claimer") {
-                    Memory.claimers.push(test)
+                    Memory.claimers[String(Math.random)] = test
                 }
                 if(this.memory.queue[0].is == "LRB") {
                     Memory.longRangeBuilders.push(test)
@@ -88,6 +88,21 @@ Creep.prototype.placeRoadByPath = function(path,Suceedstorage) {
             }
     }
     this.memory["_"+Suceedstorage]={p:path,s:t}
+}
+Room.prototype.isNearby = function(roomName) {
+    let dist = Math.round(getTrueDistance(new RoomPosition(25,25,this.name),new RoomPosition(25,25,roomName))/50)
+    if(dist<=1) return true; else return false;
+}
+Room.prototype.getNearbyActive = function() {
+    let retVal = []
+    for(let roomT in Game.rooms) {
+        let room = Game.rooms[roomT]
+        let dist = Math.round(getTrueDistance(new RoomPosition(25,25,this.name),new RoomPosition(25,25,room.name))/50)
+        if(dist<=1) {
+            retVal.push(room)
+        }
+    }
+    return retVal
 }
 Room.prototype.getMasterSpawn = function() {
     if(this.memory.masterspawn !== undefined) {

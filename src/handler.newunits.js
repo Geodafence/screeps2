@@ -135,6 +135,7 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
             if(allstores >= 4) {
                 buildercost = 300+(50*allstores)
             }
+            allstores = allstorescheck
             global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
         } else {
             allmodules=global.cache[spawnname+"Ucache"+type].modules
@@ -144,7 +145,6 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
         if(neededharvs > Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length) {
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
                 if(Game.spawns[spawnname].spawning === null) {
-                    console.log("ok harvester time")
                     if(createharv(allmodules, spawnname) == 0) {
                         global.createdunit = 1
                         return
@@ -179,7 +179,7 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
             ]
             milestones = {
                 20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,WORK,WORK,WORK,WORK,WORK,WORK],
-                30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY]
+                30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY]
             }
             if(allmodulelevels.length-1 < allstores) {
                 allstores = allmodulelevels.length-1
@@ -189,17 +189,17 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
             for(let am in milestones) {
                 if(Game.spawns[spawnname].room.controller.level != 1 && allstorescheck >= am) {
                     allmodules = milestones[am]
-                    allstores = am
                     buildercost = partcost(allmodules)
                 }
             }
+            allstores = allstorescheck
             global.cache[spawnname+"Ucache"+type] = {cost:buildercost,modules:allmodules,extensions:allstores}
             console.log("refreshing spawn cache for "+type+" on spawn "+spawnname+" with data\n"+JSON.stringify(global.cache[spawnname+"Ucache"+type]))
         } else {
             allmodules=global.cache[spawnname+"Ucache"+type].modules
             buildercost=global.cache[spawnname+"Ucache"+type].cost
         }
-        if(Memory.storedcreeps.length == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 1 && (Memory.haulers.length >= global.haulercreations)) {
+        if(Memory.storedcreeps.length == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade >= 1 && (Memory.haulers.length >= global.haulercreations)) {
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
                 if(Game.spawns[spawnname].spawning === null) {
                     console.log("I require miner")
@@ -245,6 +245,10 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
         }
 
         if(global.isextractor) {
+            //Don't need mins rn
+            if(global.needMins===0) {
+                return
+            }
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost) {
                 if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs === undefined) {
                     Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs = []
@@ -252,7 +256,7 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                 let minerals = Game.spawns[spawnname].room.find(FIND_MINERALS,{filter: function(a) {
                     return a.mineralAmount > 0
                 }})
-                if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs && (Memory.haulers.length >= global.haulercreations && Memory.longrangemining[4].creeps.length !== 0)&&(Game.spawns[spawnname].room.getMasterSpawn().memory.queen2&&Game.spawns[spawnname].room.getMasterSpawn().memory.queen)&&minerals.length>0) {
+                if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs && (Memory.haulers.length >= global.haulercreations && Memory.longrangemining[Memory.longrangemining.length-1].creeps.length !== 0)&&(Game.spawns[spawnname].room.getMasterSpawn().memory.queen2&&Game.spawns[spawnname].room.getMasterSpawn().memory.queen)&&minerals.length>0) {
                     if(Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs.length < 1) {
                         if(Game.spawns[spawnname].spawning === null) {
                             global.createdunit = 1
@@ -296,9 +300,9 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
     }
     export function checkbuildwant(ref) {
         if(Game.spawns[ref].room.controller.level>4) {
-            return 3
+            return 4
         } else {
-            return Game.spawns[ref].room.find(FIND_SOURCES).length*2+1
+            return Game.spawns[ref].room.find(FIND_SOURCES).length*2+4
         }
     }
     export function newbuildcheck(spawnname) {
@@ -323,12 +327,12 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                 [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
                 [WORK, WORK, CARRY,CARRY,MOVE, MOVE, MOVE],
                 [MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,WORK,WORK],
-                [WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE],
+                [WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
                 [MOVE,MOVE,MOVE,CARRY,CARRY,WORK,WORK,WORK],
             ]
             if(Game.spawns[spawnname].room.controller.level>4) {
                 var milestones = {
-                    20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                    20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY]
                     //30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
                 }
             } else {
@@ -368,8 +372,9 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                 }
             }
         }
+        /*
         if(Memory.haulers.length >= global.haulercreations && Memory.storecache >= 40) {
-            allmodules=[MOVE,MOVE,MOVE,CLAIM,CLAIM,CLAIM]
+            allmodules=[MOVE,MOVE,MOVE,CLAIM,CLAIM]
             let need = 0
             for(let AAA in Memory.claimers) {
                 need+=1
@@ -381,6 +386,7 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                 }
             }
         }
+        */
     }
     export function newhaulercheck(spawnname) {
         if(global.createdunit == 1 || global.defenseNeeded >= 20) {
@@ -392,9 +398,8 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
         var buildercost
         let allstorescheck = Memory.storecache
         if(Game.spawns[spawnname].room.controller.level == 1 ||
-            (Memory.haulers.length < 4) ||
-            (Game.spawns[spawnname].room.storage && Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined && Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined) ||
-            global.restartEco!==undefined
+            (Memory.haulers.length < 1) ||
+            (Game.spawns[spawnname].room.storage && Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined && Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined)
         ) {
             allstores = 0
             allstorescheck = allstores
@@ -424,7 +429,7 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                 //EDIT: due to cpu costs, I need to use this
                 //EDIT EDIT: this kills eco, why??????
                 //EDIT EDIT EDIT: ima try this again, fuck you past Geo
-                30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                //30:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
             }
             if(global.inDeficit == 1) {
                 allstores = global.deficitLevel
@@ -455,7 +460,6 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                     }
                 }
         }
-        if(Memory.haulerlevel <= allstores||global.restartEco!==undefined) {
             if((Math.ceil((Memory.haulerneeded+(allmodules.length/2))/(allmodules.length/2)/3)) >= Memory.haulers.length&&Game.spawns[spawnname].room.controller.level>=4) {
                 global.restartEco = Game.spawns[spawnname]
             } else {
@@ -467,7 +471,6 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
             if(Game.spawns[spawnname].room.energyAvailable >= buildercost && Memory.haulers.length < Math.ceil((Memory.haulerneeded+(allmodules.length/2))/(allmodules.length/2))) {
             if(Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade>=1 ||
             (Memory.haulers.length < 3 || (Game.spawns[spawnname].room.getMasterSpawn().memory.queen !== undefined || Game.spawns[spawnname].room.controller.level <= 3))) {
-                console.log("HEHEHEHA GRRRR "+spawnname)
                 if((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)) {
                     if(Game.spawns[spawnname].spawning == null) {
                             global.createdunit = 1
@@ -475,6 +478,13 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
                             return
                         }
                     }
+                }
+            }
+        if(Game.spawns[spawnname].room.energyAvailable >= buildercost&&Game.spawns[spawnname].room.controller.level<6) {
+            if(Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill===undefined&&checkbuildwant(spawnname)<=Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length) {
+                if(Game.spawns[spawnname].spawning == null) {
+                    global.createdunit = 1
+                    createUpgradeRefill(spawnname,allmodules)
                 }
             }
         }
@@ -519,7 +529,7 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
         }
         Memory.combatlevel = allstores
         if((Game.spawns[spawnname].room.energyAvailable >= buildercost) && (Memory.storedcreeps.length >= 1|| global.defenseNeeded >= 20)) {
-            if((checkbuildwant(spawnname)<= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length && Memory.fighters.length < 12)) {
+            if((Memory.fighters.length < 4)) {
                 if((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)|| global.defenseNeeded >= 20) {
                     if(Game.spawns[spawnname].spawning == null) {
                         global.createdunit = 1
@@ -571,6 +581,17 @@ export function newunitcheck(spawnname, allmodulelevels, milestones, ifCalls, un
             } else if(Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined) {
                 Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 = test
             }
+        }
+    }
+    export function createUpgradeRefill(spawnname, moduledata) {
+        var test = newid()
+        console.log("attemping to create a creep with id: "+ test)
+        var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
+            memory: {level: Memory.haulerlevel,spawnid: Game.spawns[spawnname].id}
+        })
+        console.log("errorlog: "+errorreg)
+        if(errorreg == OK) {
+            Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill=test
         }
     }
     export function createhauler(spawnname, moduledata) {
