@@ -1,7 +1,8 @@
 
 
+
     /** @param {Creep} creep **/
-    export function run(creep) {
+    export function run(creep:Creep) {
         var terminate = 0
         if(creep.memory.state === undefined) {
             creep.memory.state = "mining"

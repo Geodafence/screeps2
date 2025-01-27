@@ -1,4 +1,8 @@
-function flee(creep, goal) {
+
+
+import { RoomObject } from "../../typings/room-object";
+import { AnyOwnedStructure, Structure } from "../../typings/structure";
+function flee(creep:Creep, goal:RoomObject) {
     let goals = [{ pos: goal.pos, range: 3 }];
     let ret =  PathFinder.search(
     creep.pos, goals,
@@ -16,7 +20,7 @@ function flee(creep, goal) {
         // In this example `room` will always exist, but since
         // PathFinder supports searches which span multiple rooms
         // you should be careful!
-        if (!room) return;
+        if (!room) return false;
         let costs = new PathFinder.CostMatrix;
 
         room.find(FIND_STRUCTURES).forEach(function(struct) {
@@ -44,19 +48,19 @@ function flee(creep, goal) {
   creep.move(creep.pos.getDirectionTo(pos));
   return ret
 }
-function combatCalc(creep,target) {
+function combatCalc(creep:Creep,target:RoomObject) {
     if(creep.getActiveBodyparts(HEAL) > 0&&creep.saying !== "ATTACK"&&creep.hits<creep.hitsMax)  {
         creep.heal(creep)
     }
     if(creep.saying === undefined) {
-        var lastAction = 0
+        var lastAction = "none"
     } else {
         var lastAction = creep.saying
     }
 
     if(creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
             if(creep.pos.getRangeTo(target) < 3) {
-                let hide = creep.pos.findInRange(FIND_MY_STRUCTURES, 3, {filter: (structure) => {
+                let hide = creep.pos.findInRange(FIND_MY_STRUCTURES, 3, {filter: (structure:Structure) => {
                     return structure.structureType == STRUCTURE_RAMPART
                 }})
                 if(hide.length > 0) {
@@ -65,7 +69,7 @@ function combatCalc(creep,target) {
                     flee(creep,target)
                 }
             }
-            if(creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3,{filter: function(creep) {
+            if(creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3,{filter: function(creep:Creep) {
                 return creep.owner.username !== "chungus3095"
             }}).length > 1) {
                 creep.rangedMassAttack()
@@ -88,13 +92,14 @@ function combatCalc(creep,target) {
      * @param {Creep} creep
      * @returns
      */
-    export function run(creep) {
+    export function run(creep:Creep) {
         if(Game.flags.attack === undefined) {
-            var closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep) {
+            var closestHostile:RoomObject|Creep|null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
                 return creep.owner.username !== "chungus3095"
             }});
             if(!closestHostile) {
-                closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES,{filter: function(creep) {
+                closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES,{filter: function(creep:Structure) {
+                    //@ts-ignore
                     return creep.owner.username !== "chungus3095"
                 }});
             }
@@ -108,14 +113,17 @@ function combatCalc(creep,target) {
             }
             // Patrolling behavior
             if (creep.memory.patrolling === undefined) {
-                var targetRoom;
+                var targetRoom: {
+                    room: string;
+                    usedSegment: number;
+                };
                 var targetCreep
                 do {
                     targetRoom = Memory.miningrooms[Math.floor(Math.random() * Memory.miningrooms.length)];
                     targetCreep = new RoomPosition(25,25,targetRoom.room)
                 } while (targetRoom === creep.memory.lastRoom);
 
-                creep.memory.targetCreep = targetCreep
+                creep.memory.targetCreeps = targetCreep
                 creep.memory.patrolling = targetRoom;
                 creep.memory.lastRoom = targetRoom;
                 creep.memory.defenseoverride = 0
@@ -134,7 +142,10 @@ function combatCalc(creep,target) {
                 creep.memory.TX = 25
                 creep.memory.TY = 25
             }
+            //@ts-ignore
             creep.moveTo(new RoomPosition(creep.memory.TX,creep.memory.TY,creep.memory.roomname),{reusePath: 100,stroke: '#ff0000'})
+            //@ts-ignore
+            creep.memory.wait = creep.memory.wait!==undefined ? creep.memory.wait : 0
             creep.memory.wait+=1
             if(creep.memory.wait > 120) {
                 creep.memory.patrolling = undefined
@@ -149,12 +160,12 @@ function combatCalc(creep,target) {
         if(theif) {
             creep.moveTo(Game.flags.attack,{reusePath: 200,stroke: '#ff0000'})
         } else {
-            let target1 = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep) {
+            let target1 = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
                 return creep.owner.username !== "chungus3095"
             }});
             let target2 = creep.room.find(FIND_HOSTILE_STRUCTURES);
             for(const t in target2) {
-                I = target2[t]
+                let I = target2[t]
                 if(I.structureType == STRUCTURE_TOWER&&creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(crep) {
                     return (crep.getActiveBodyparts(ATTACK) > 0|| crep.getActiveBodyparts(RANGED_ATTACK) > 0) && crep.owner.username !== "chungus3095";
                 }}).length==0) {
@@ -166,7 +177,7 @@ function combatCalc(creep,target) {
             if(target1) {
                 combatCalc(creep, target1)
             } else {
-                let target2 = creep.room.find(FIND_HOSTILE_STRUCTURES);
+                let target2:AnyOwnedStructure|AnyOwnedStructure[] = creep.room.find(FIND_HOSTILE_STRUCTURES);
                 if(target2[0].structureType === STRUCTURE_CONTROLLER) {
                     target2 = target2[1]
                 } else {

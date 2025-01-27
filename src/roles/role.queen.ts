@@ -1,15 +1,18 @@
 import { fufillrequest, getrequest } from "../libs/item-request-lib"
 import { getTrueDistance } from "../libs/general.functions"
+import { report } from "../libs/roomReporting"
+import { AnyStoreStructure, Structure, StructureLink } from "../../typings/structure"
 /**
  *
- * @param {*} masterSpawn
+ * @param {StructureSpawn} masterSpawn
  * @returns {StructureLink}
  */
-function getMasterLink(masterSpawn) {
-    let links = masterSpawn.room.find(FIND_MY_STRUCTURES,{filter: function(structure) {
+function getMasterLink(masterSpawn:StructureSpawn) {
+    let links:StructureLink[] = masterSpawn.room.find(FIND_MY_STRUCTURES,{filter: function(structure:Structure) {
         return structure.structureType === STRUCTURE_LINK
     }})
-    let link = 0
+    let link:StructureLink|undefined
+    link = undefined
     let range = 999999
     for(let I in links) {
         if(getTrueDistance(links[I].pos,masterSpawn.pos)<range) {
@@ -18,13 +21,14 @@ function getMasterLink(masterSpawn) {
         }
     }
     return link
+
 }
     /**
      *
      * @param {Creep} creep
      * @param {*} queenType
      */
-    export function tick(creep,queenType) {
+    export function tick(creep:Creep,queenType:string) {
         if(creep.store[RESOURCE_ENERGY] == creep.store.getCapacity()&&creep.memory.fufilling===undefined) {
             creep.memory.state = "moving"
         }
@@ -38,8 +42,9 @@ function getMasterLink(masterSpawn) {
         }
         if(creep.memory.fufilling===undefined||creep.memory.state == "moving") {
         if(creep.memory.state == "grabbing") {
+            //@ts-ignore
             var target = Game.getObjectById(creep.memory.spawnid).room.find(FIND_STRUCTURES, {
-                filter: (structure) => {
+                filter: (structure:Structure) => {
                     return (structure.structureType == STRUCTURE_STORAGE)
                 }
             })
@@ -64,17 +69,18 @@ function getMasterLink(masterSpawn) {
             }
         } else {
             var target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-                filter: (structure) => {
+                filter: (structure:AnyStoreStructure) => {
                     return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0&&structure.isActive();
                 }
             })
             if(creep.room.find(FIND_STRUCTURES, {
                 filter: object => object.hits < 2000&&object.structureType===STRUCTURE_RAMPART
-            }).length>0) {
-                console.log("emergancy rampart repair online for "+Game.getObjectById(creep.memory.spawnid).name)
+            }).length>0&&creep.memory.spawnid!==undefined) {
+                //@ts-ignore
+                report.formatBasic(creep.room.name,"emergancy rampart repair online for "+Game.getObjectById(creep.memory.spawnid).name)
                 var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                    filter: (structure) => {
+                    filter: (structure:AnyStoreStructure) => {
                         return (structure.structureType == STRUCTURE_TOWER) &&
                             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                     }
@@ -83,7 +89,7 @@ function getMasterLink(masterSpawn) {
             if(target) {
             } else {
                 target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-                    filter: (structure) => {
+                    filter: (structure:AnyStoreStructure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||
                             (structure.structureType == STRUCTURE_TOWER&&structure.store.getFreeCapacity(RESOURCE_ENERGY) > 500) ) &&
                             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0&&structure.isActive();
@@ -93,7 +99,9 @@ function getMasterLink(masterSpawn) {
                     getrequest(creep)
                     try {
                         fufillrequest(creep)
-                    } catch(e) {}
+                    } catch(e) {
+                        report.formatBasic(creep.room.name,"Error: "+e)
+                    }
                 }
 
             }
@@ -101,7 +109,7 @@ function getMasterLink(masterSpawn) {
                 return creep.owner.username !== "chungus3095"
             }});
             if(check.length > 0) {
-                target = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (structure) => {
+                target = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (structure:AnyStoreStructure) => {
                     return structure.structureType == STRUCTURE_TOWER&&structure.store.getFreeCapacity(RESOURCE_ENERGY) > 500;
                 }
             })

@@ -7,9 +7,17 @@
     "outDir": "dist",
     "baseUrl": "src/",
     "sourceMap": true,
+    "allowJs": true,
+    "checkJs": true,
+    "paths": {
+      "./typings/": [
+        "*"
+      ]
+    },
     "strict": true,
     "experimentalDecorators": true,
     "noImplicitReturns": true,
+    "noEmit": false,
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false
   },

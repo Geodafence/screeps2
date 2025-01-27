@@ -1,3 +1,4 @@
+//@ts-nocheck
 function findOptimalRamparts(room) {
     const spawn = room.getMasterSpawn();
     if (!spawn) {

@@ -1,8 +1,10 @@
+
 import { register as _register, harvest, remove } from "../libs/general.sourceregistering";
 import { filter } from "lodash";
+import { Structure } from "../../typings/structure";
 
     /** @param {Creep} creep **/
-    export function run(creep) {
+    export function run(creep:Creep) {
         var terminate = 0
         if(creep.memory.state === undefined) {
             creep.memory.state = "mining"
@@ -38,11 +40,11 @@ import { filter } from "lodash";
                     }
             });
             }
-            targets.sort((a, b) => (a.structureType == STRUCTURE_STORAGE || a.structureType == STRUCTURE_TOWER) - (b.structureType == STRUCTURE_STORAGE || b.structureType == STRUCTURE_TOWER));
+            targets.sort((a:Structure, b:Structure) => Number((a.structureType == STRUCTURE_STORAGE || a.structureType == STRUCTURE_TOWER)) - Number((b.structureType == STRUCTURE_STORAGE || b.structureType == STRUCTURE_TOWER)));
             if(creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep) {
                 return creep.owner.username !== "chungus3095"
             }}).length > 0) {
-                let set = creep.room.find(FIND_STRUCTURES, {filter: function(struct) {
+                let set = creep.room.find(FIND_MY_STRUCTURES, {filter: function(struct) {
                     return struct.structureType == STRUCTURE_TOWER
                 }})
                 if(set.length > 0) {

@@ -1,4 +1,13 @@
-function flee(creep, goal) {
+
+
+import { RoomObject } from "../../typings/room-object";
+
+import { Structure } from "../../typings/structure";
+import { isNull, isUndefined } from "lodash";
+import { report } from "./../libs/roomReporting";
+
+function flee(creep:Creep, goal:RoomObject) {
+    //@ts-ignore
     let goals = { pos: goal.pos, range: 6 };
     let ret = PathFinder.search(creep.pos, goals, {
         // We need to set the defaults costs higher so that we
@@ -12,7 +21,7 @@ function flee(creep, goal) {
             // In this example `room` will always exist, but since
             // PathFinder supports searches which span multiple rooms
             // you should be careful!
-            if (!room) return;
+            if (!room) return false;
             let costs = new PathFinder.CostMatrix();
 
             room.find(FIND_STRUCTURES).forEach(function (struct) {
@@ -40,9 +49,7 @@ function flee(creep, goal) {
     creep.move(creep.pos.getDirectionTo(pos));
     return ret;
 }
-import { getseed } from "../libs/general.functions";
-import { isNull, isUndefined } from "lodash";
-export function locateMinerCreeps(creep) {
+export function locateMinerCreeps(creep:Creep) {
     return creep.room.find(FIND_MY_CREEPS, {
         filter: function (U) {
             return creep.memory.targetCreeps.includes(U.name);
@@ -54,7 +61,7 @@ export function locateMinerCreeps(creep) {
  * @param {Creep} creep
  * @returns
  */
-export function tick(creep, focuson) {
+export function tick(creep:Creep, focuson:any) {
     try {
         if (creep.store[RESOURCE_ENERGY] == 0) {
             creep.memory.moving = false;
@@ -93,15 +100,17 @@ export function tick(creep, focuson) {
             creep.memory.cachTarget = undefined;
             creep.memory.cachsource = undefined;
             creep.memory.spawnid = undefined;
-
-            creep.memory.seed = getseed();
+        }
+        if(creep.getActiveBodyparts(CARRY)<=3&&Memory.haulerSatisfied>0) {
         }
         if (creep.memory.endearly === undefined) {
             creep.memory.endearly = 0;
         }
         if (
+            //@ts-ignore
             isNull(Game.getObjectById(creep.memory.spawnid)) ||
             isUndefined(creep.memory.spawnid) ||
+            //@ts-ignore
             creep.memory.spawnid === 0
         ) {
             /*
@@ -130,18 +139,21 @@ export function tick(creep, focuson) {
         );
         if (
             creep.pos.findInRange(FIND_HOSTILE_CREEPS, 5, {
-                filter: function (creep) {
+                filter: function (creep:Creep) {
                     return creep.owner.username !== "chungus3095"
                 }
             }).length > 0
         ) {
-            flee(
+            console.log("AFJAEOUFHEHFUOEWFHWI")
+            let goals:Creep = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,  {
+
+                filter: function (creep:Creep) {
+                    return creep.owner.username !== "chungus3095"
+                }
+            })
+            if(goals!==null) flee(
                 creep,
-                creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS, 5, {
-                    filter: function (creep) {
-                        return creep.owner.username !== "chungus3095"
-                    }
-                })
+                goals
             );
             let alreadyrequested = -1;
             for (let temp in Memory.defenserequests) {
@@ -179,12 +191,14 @@ export function tick(creep, focuson) {
             let move = new RoomPosition(25, 25, creep.memory.patrolling.room);
             Game.map.visual.line(creep.pos,move);
             Game.map.visual.circle(creep.pos,{stroke:"#66BB6A",fill:"#66BB6A",radius:1})
+            //@ts-ignore
             creep.moveTo(move, { reusePath: 40, stroke: "white" });
             // }
         } else if (creep.memory.moving == false) {
+            //@ts-ignore
             if (creep.memory.cachTarget === undefined || !Game.getObjectById(creep.memory.cachTarget)) {
                 let nullcheck = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
-                    filter: structure => {
+                    filter: (structure:Resource) => {
                         return (
                             structure.amount >= creep.store.getCapacity() && structure.resourceType === RESOURCE_ENERGY
                         );
@@ -199,10 +213,14 @@ export function tick(creep, focuson) {
             if (creep.memory.cachTarget === null) {
                 creep.memory.endearly += 5;
             }
+            //@ts-ignore
             if (Game.getObjectById(creep.memory.cachTarget)) {
+                //@ts-ignore
                 Game.map.visual.line(creep.pos,Game.getObjectById(creep.memory.cachTarget).pos);
                 Game.map.visual.circle(creep.pos,{stroke:"#66BB6A",fill:"#66BB6A",radius:1})
+                //@ts-ignore
                 if (creep.pickup(Game.getObjectById(creep.memory.cachTarget)) == ERR_NOT_IN_RANGE) {
+                    //@ts-ignore
                     creep.moveTo(Game.getObjectById(creep.memory.cachTarget), {
                         reusePath: creep.dynamicReuse(),
                         visualizePathStyle: { stroke: "#ffffff" }
@@ -234,9 +252,12 @@ export function tick(creep, focuson) {
             //}
 
             if (
+                //@ts-ignore
                 Game.getObjectById(creep.memory.spawnid).room.storage &&
+                //@ts-ignore
                 Game.getObjectById(creep.memory.spawnid).memory.queen !== undefined
             ) {
+                //@ts-ignore
                 const leepicstorage = Game.getObjectById(creep.memory.spawnid).room.storage;
                 if (leepicstorage.id !== undefined) {
                     creep.memory.cachsource = leepicstorage.id;
@@ -248,17 +269,21 @@ export function tick(creep, focuson) {
             if (
                 creep.memory.cachsource === undefined ||
                 creep.memory.cachsource === null ||
+                //@ts-ignore
                 (Game.getObjectById(creep.memory.cachsource).store.getFreeCapacity(RESOURCE_ENERGY) == 0 &&
                     Game.getObjectById(creep.memory.cachsource))
             ) {
+                //@ts-ignore
                 let temp = Game.getObjectById(creep.memory.spawnid)
+                //@ts-ignore
                     .room.find(FIND_MY_STRUCTURES, {
-                        filter: structure => {
+                        filter: (structure:Structure) => {
                             return (
                                 (structure.structureType == STRUCTURE_EXTENSION ||
                                     structure.structureType == STRUCTURE_SPAWN ||
                                     (Memory.haulers.length > 6 && structure.structureType == STRUCTURE_STORAGE) ||
                                     (Memory.haulers.length > 6 && structure.structureType == STRUCTURE_TOWER)) &&
+                                //@ts-ignore
                                 structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
                                 structure.isActive()
                             );
@@ -267,9 +292,9 @@ export function tick(creep, focuson) {
 
                     if(temp.length>0) {
                         temp.sort(
-                            (a, b) =>
-                                (a.structureType == STRUCTURE_STORAGE || a.structureType == STRUCTURE_TOWER) -
-                                (b.structureType == STRUCTURE_STORAGE || b.structureType == STRUCTURE_TOWER)
+                            (a:Structure, b:Structure) =>
+                                Number((a.structureType == STRUCTURE_STORAGE || a.structureType == STRUCTURE_TOWER)) -
+                                Number((b.structureType == STRUCTURE_STORAGE || b.structureType == STRUCTURE_TOWER))
                         );
                     }
                 if (temp.length == 0) {
@@ -282,36 +307,44 @@ export function tick(creep, focuson) {
                     }
                 }
             }
+            //@ts-ignore
             let check = Game.getObjectById(creep.memory.spawnid).room.find(FIND_HOSTILE_CREEPS, {
-                filter: function (creep) {
+                filter: function (creep:Creep) {
                     return creep.owner.username !== "chungus3095"
                 }
             });
             if (check.length > 0) {
-                console.log("test2")
+                //@ts-ignore
                 creep.memory.cachsource = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                    filter: structure => {
-                        return structure.structureType == STRUCTURE_TOWER;
+                    filter: (struct:Structure) => {
+                        return struct.structureType == STRUCTURE_TOWER;
                     }
                 }).id;
             } else {
+                //@ts-ignore
                 if(!Game.getObjectById(creep.memory.cachsource)) {
                     creep.memory.cachsource = undefined;
+                    //@ts-ignore
                 } else if (Game.getObjectById(creep.memory.cachsource).structureType == STRUCTURE_TOWER) {
                     creep.memory.cachsource = undefined;
                 }
             }
             if (creep.memory.cachsource) {
+                //@ts-ignore
                 Game.map.visual.line(creep.pos,Game.getObjectById(creep.memory.cachsource).pos);
                 Game.map.visual.circle(creep.pos,{stroke:"#66BB6A",fill:"#66BB6A",radius:1})
+                //@ts-ignore
                 if (creep.transfer(Game.getObjectById(creep.memory.cachsource), RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                    //@ts-ignore
                     if (creep.pos.inRangeTo(Game.getObjectById(creep.memory.cachsource), 7)) {
+                        //@ts-ignore
                         creep.moveTo(Game.getObjectById(creep.memory.cachsource), {
                             reusePath: 10,
                             visualizePathStyle: { stroke: "#ffffff" },
                             maxOps: 250
                         });
                     } else {
+                        //@ts-ignore
                         creep.moveTo(Game.getObjectById(creep.memory.cachsource), {
                             reusePath: 90,
                             visualizePathStyle: { stroke: "#ffffff" }
@@ -334,6 +367,6 @@ export function tick(creep, focuson) {
             }
         } catch {}
     } catch (err) {
-        console.log("hauler " + creep.name + " errored with error " + err);
+        report.formatBasic(creep.room.name,"hauler " + creep.name + " errored with error " + err);
     }
 }

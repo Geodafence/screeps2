@@ -1,5 +1,7 @@
-import { partcost,getTrueDistance } from "../libs/general.functions"
+import { partcost,getTrueDistance } from "./general.functions"
 import { newid } from "../role.assign"
+import { report } from "./roomReporting"
+import { PathStep } from "../../typings/helpers"
 StructureSpawn.prototype.queueCheck = function() {
     if(this.memory.queue === undefined) {
         this.memory.queue = []
@@ -21,14 +23,13 @@ StructureSpawn.prototype.queueCheck = function() {
                         this.memory.queue[0].modules,
                         test,
                     )
-                console.log("queue opened, attempting to use")
                 if(errorreg == OK) {
                     if(this.memory.queue[0].baseMemory !== null) {
                         for(let item in this.memory.queue[0].baseMemory) {
+                            //@ts-ignore
                             Game.creeps[test].memory[item] = this.memory.queue[0].baseMemory[item]
                         }
                     }
-                    console.log("dryrun worked, creating fr")
                 global.createdunit = 1
                 if(this.memory.queue[0].is == "claimer") {
                     Memory.claimers[String(Math.random)] = test
@@ -36,14 +37,13 @@ StructureSpawn.prototype.queueCheck = function() {
                 if(this.memory.queue[0].is == "LRB") {
                     Memory.longRangeBuilders.push(test)
                 }
+                report.formatBasic(this.room.name,"a creep type: "+this.memory.queue[0].is+" was created with error log: "+errorreg)
                 delete this.memory.queue[0]
                 if(this.memory.queue[1] !== undefined) {
                     this.memory.queue[0] = this.memory.queue[1]
                 } else {
                     this.memory.queue = []
                 }
-            } else {
-                console.log("ok nvm the dryrun failed with error: "+errorreg)
             }
         }
     }
@@ -60,20 +60,26 @@ StructureSpawn.prototype.queueAppend = function(moduleData,memoryData,creepType,
  * @param {String} Suceedstorage defines where to store suceeded in memory
  * @returns {Boolean} if the road placement was completely true or false
 **/
-Creep.prototype.placeRoadByPath = function(path,Suceedstorage) {
+Creep.prototype.placeRoadByPath = function(path:string|PathStep[],Suceedstorage:string) {
     return
+    //@ts-ignore
+    if(typeof path!=="string") return
+    //@ts-ignore
     if(this.memory["_"+Suceedstorage]){
+        //@ts-ignore
         if(this.memory["_"+Suceedstorage].p==path&&this.memory["_"+Suceedstorage].s==true) {
             return true
         }
     }
     let t = true
+    //@ts-ignore
     path = Room.deserializePath(path)
     if(path.length == 0) {
         return true
     }
-    for(I in path) {
-        let x = path[I].x;let y = path[I].y;let r = this.room.name
+    for(let I of path) {
+        //@ts-ignore
+        let x = I.x;let y = I.y;let r = this.room.name
             let a = Game.rooms[r].lookAt(x,y)
             let b = true
             for(let _1 in a) {
@@ -87,6 +93,7 @@ Creep.prototype.placeRoadByPath = function(path,Suceedstorage) {
                 if(s==ERR_INVALID_TARGET) t=false
             }
     }
+    //@ts-ignore
     this.memory["_"+Suceedstorage]={p:path,s:t}
 }
 Room.prototype.isNearby = function(roomName) {
@@ -104,6 +111,7 @@ Room.prototype.getNearbyActive = function() {
     }
     return retVal
 }
+//@ts-ignore
 Room.prototype.getMasterSpawn = function() {
     if(this.memory.masterspawn !== undefined) {
         return Game.getObjectById(this.memory.masterspawn)
@@ -121,6 +129,7 @@ Room.prototype.getMasterSpawn = function() {
     this.memory.masterspawn = spawns[0].id
     return Game.getObjectById(this.memory.masterspawn)
 }
+//@ts-ignores
 Creep.prototype.dynamicReuse = function() {
     let re = 40
     if(this.pos.findInRange(FIND_CREEPS,2).length>0) re = 10

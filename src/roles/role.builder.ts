@@ -2,8 +2,9 @@ import {run as upgrading } from "../allocation.upgrading";
 import { run as general } from "../allocation.building";
 import { remove } from "../libs/general.sourceregistering";
 
+
     /** @param {Creep} creep **/
-    export function run(creep, spawnname) {
+    export function run(creep:Creep, spawnname:string) {
         //if(creep.ticksToLive < 200||creep.memory.regen) {
         //    creep.moveTo(Game.spawns[spawnname])
         //    Game.spawns[spawnname].renewCreep(creep)
@@ -13,7 +14,8 @@ import { remove } from "../libs/general.sourceregistering";
         //    }
         //    return
         //}
-        if(Game.spawns[spawnname].room.controller.level>4) {
+        //@ts-ignore
+        if(Game.spawns[spawnname].room.controller!==undefined&&Game.spawns[spawnname].room.controller.level>4) {
             if(Game.spawns[spawnname].memory.builderallocations.upgrade < 1 && creep.memory.task == undefined) {
                 creep.memory.task = 'upgrade'
                 Game.spawns[spawnname].memory.builderallocations.upgrade += 1
@@ -33,8 +35,9 @@ import { remove } from "../libs/general.sourceregistering";
             }
         }
         new RoomVisual(creep.room.name).text('Builder, task: '+creep.memory.task, creep.pos.x, creep.pos.y+1, {align: 'center',font:0.3,color:'orange',stroke:"white",strokeWidth:0.01});
-        if(creep.memory.level < Memory.builderlevel) {
+        if(creep.memory.level!==undefined&&creep.memory.level < Memory.builderlevel) {
             if(creep.memory.task != undefined) {
+                //@ts-ignore
                 Game.spawns[spawnname].memory.builderallocations[creep.memory.task] -= 1
                 if(creep.memory.task == 'general') {
                     remove("buildersources",creep)

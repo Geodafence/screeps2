@@ -1,6 +1,23 @@
 import {assert} from "chai";
-import {loop} from "../../src/main";
-import {Game, Memory} from "./mock"
+import {loop} from "../../src/main.ts";
+const Game: {
+  creeps: { [name: string]: any };
+  rooms: any;
+  spawns: any;
+  time: any;
+} = {
+  creeps: {},
+  rooms: [],
+  spawns: {},
+  time: 12345
+};
+
+const Memory: {
+  creeps: { [name: string]: any };
+} = {
+  creeps: {}
+};
+
 
 describe("main", () => {
   before(() => {

@@ -1,4 +1,9 @@
-export function tick(creep) {
+import { ConstructionSite } from "../../typings/construction-site";
+
+
+import { Structure } from "../../typings/structure";
+
+export function tick(creep:Creep) {
     if (creep === undefined) {
         return;
     }
@@ -30,15 +35,15 @@ export function tick(creep) {
                 let moveto = new RoomPosition(25, 25, creep.memory.room);
                 creep.moveTo(moveto, { reusePath: 40 });
             } else {
-                let find = creep.room.find(FIND_CONSTRUCTION_SITES);
+                let find:ConstructionSite[] = creep.room.find(FIND_CONSTRUCTION_SITES);
                 const targets = creep.room.find(FIND_STRUCTURES, {
-                    filter: object => object.hits < object.hitsMax*0.50&&object.structureType!==STRUCTURE_WALL&&object.structureType!==STRUCTURE_RAMPART
+                    filter: (object:Structure) => object.hits < object.hitsMax*0.50&&object.structureType!==STRUCTURE_WALL&&object.structureType!==STRUCTURE_RAMPART
                 });
                 const targets2 = creep.room.find(FIND_STRUCTURES, {
-                    filter: object => object.hits < object.hitsMax*0.30&&object.structureType!==STRUCTURE_WALL&&object.structureType!==STRUCTURE_RAMPART
+                    filter: (object:Structure) => object.hits < object.hitsMax*0.30&&object.structureType!==STRUCTURE_WALL&&object.structureType!==STRUCTURE_RAMPART
                 });
                 if (find&&targets2.length===0) {
-                    find.sort((a,b) => (b.structureType === STRUCTURE_SPAWN)-(a.structureType === STRUCTURE_SPAWN))
+                    find.sort((a:ConstructionSite,b:ConstructionSite) => Number((b.structureType === STRUCTURE_SPAWN))-Number((a.structureType === STRUCTURE_SPAWN)))
                     if (creep.build(find[0]) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(find[0]);
                     }
@@ -51,6 +56,7 @@ export function tick(creep) {
                 }
             }
         } else {
+            //@ts-ignore
             if(Game.getObjectById(creep.memory.spawnid).room.name==="E7S33"&&creep.memory.room==="E5S31") {
                 if(creep.memory.didDetour<=20) {
                     creep.moveTo(new RoomPosition(25,25,"E5S33"))
@@ -58,14 +64,17 @@ export function tick(creep) {
                     return
                 }
             }
+            //@ts-ignore
             let debug = Game.getObjectById(creep.memory.spawnid).pos.findClosestByRange(FIND_MY_STRUCTURES, {
-                filter: function (struct) {
+                filter: function (struct:Structure) {
                     return struct.structureType == STRUCTURE_STORAGE;
                 }
             });
+            //@ts-ignore
             if (creep.ticksToLive < 1000) Game.getObjectById(creep.memory.spawnid).renewCreep(creep);
 
-            if (creep.ticksToLive < 0) {
+            if (creep.ticksToLive!==undefined&&creep.ticksToLive < 0) {
+                //@ts-ignore
                 creep.moveTo(Game.getObjectById(creep.memory.spawnid));
             } else {
                 if (creep.withdraw(debug, RESOURCE_ENERGY) !== OK) {
