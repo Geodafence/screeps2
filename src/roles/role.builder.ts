@@ -1,28 +1,53 @@
 import {run as upgrading } from "../allocation.upgrading";
 import { run as general } from "../allocation.building";
 import { remove } from "../libs/general.sourceregistering";
+function swcCalc(spawnname:string,creep:Creep) {
+    if(Game.spawns[spawnname].room.controller.level>=7) {
+        if(Game.spawns[spawnname].memory.builderallocations.upgrade < 2 && creep.memory.task == undefined) {
+            creep.memory.task = 'upgrade'
+            Game.spawns[spawnname].memory.builderallocations.upgrade += 1
+        }
+        if(Game.spawns[spawnname].memory.builderallocations.general < 2 && creep.memory.task == undefined) {
+            creep.memory.task = 'general'
+            Game.spawns[spawnname].memory.builderallocations.general += 1
+        }
+    } else {
+        if(Game.spawns[spawnname].memory.builderallocations.upgrade < 4 && creep.memory.task == undefined) {
+            creep.memory.task = 'upgrade'
+            Game.spawns[spawnname].memory.builderallocations.upgrade += 1
+        }
+        if(Game.spawns[spawnname].memory.builderallocations.general < 4 && creep.memory.task == undefined) {
+            creep.memory.task = 'general'
+            Game.spawns[spawnname].memory.builderallocations.general += 1
+        }
+    }
+}
 
 
     /** @param {Creep} creep **/
     export function run(creep:Creep, spawnname:string) {
-        //if(creep.ticksToLive < 200||creep.memory.regen) {
-        //    creep.moveTo(Game.spawns[spawnname])
-        //    Game.spawns[spawnname].renewCreep(creep)
-        //    creep.memory.regen = 1
-        //    if(creep.ticksToLive > 500) {
-        //        creep.memory.regen = 0
-        //    }
-        //    return
-        //}
-        //@ts-ignore
-        if(Game.spawns[spawnname].room.controller!==undefined&&Game.spawns[spawnname].room.controller.level>4) {
-            if(Game.spawns[spawnname].memory.builderallocations.upgrade < 1 && creep.memory.task == undefined) {
-                creep.memory.task = 'upgrade'
-                Game.spawns[spawnname].memory.builderallocations.upgrade += 1
-            }
-            if(Game.spawns[spawnname].memory.builderallocations.general < 3 && creep.memory.task == undefined) {
-                creep.memory.task = 'general'
-                Game.spawns[spawnname].memory.builderallocations.general += 1
+
+        if(Memory.isswc) {
+            swcCalc(spawnname,creep)
+        } else if(Game.spawns[spawnname].room.controller!==undefined&&Game.spawns[spawnname].room.controller.level>4) {
+            if(Game.spawns[spawnname].room.controller.level>=7) {
+                if(Game.spawns[spawnname].memory.builderallocations.upgrade < 1 && creep.memory.task == undefined) {
+                    creep.memory.task = 'upgrade'
+                    Game.spawns[spawnname].memory.builderallocations.upgrade += 1
+                }
+                if(Game.spawns[spawnname].memory.builderallocations.general < 1 && creep.memory.task == undefined) {
+                    creep.memory.task = 'general'
+                    Game.spawns[spawnname].memory.builderallocations.general += 1
+                }
+            } else {
+                if(Game.spawns[spawnname].memory.builderallocations.upgrade < 1 && creep.memory.task == undefined) {
+                    creep.memory.task = 'upgrade'
+                    Game.spawns[spawnname].memory.builderallocations.upgrade += 1
+                }
+                if(Game.spawns[spawnname].memory.builderallocations.general < 3 && creep.memory.task == undefined) {
+                    creep.memory.task = 'general'
+                    Game.spawns[spawnname].memory.builderallocations.general += 1
+                }
             }
         } else {
             if(Game.spawns[spawnname].memory.builderallocations.upgrade < 4 && creep.memory.task == undefined) {

@@ -32,10 +32,27 @@ StructureSpawn.prototype.queueCheck = function() {
                     }
                 global.createdunit = 1
                 if(this.memory.queue[0].is == "claimer") {
-                    Memory.claimers[String(Math.random)] = test
+                    if(this.memory.queue[0].baseMemory.check===1) {
+                        Memory.longrangemining[this.memory.queue[0].baseMemory.state].claimer = test
+                    } else {
+                        Memory.claimers[String(Math.random())] = test
+                    }
                 }
                 if(this.memory.queue[0].is == "LRB") {
                     Memory.longRangeBuilders.push(test)
+                }
+                if(this.memory.queue[0].is == "scout") {
+                    Memory.scouts.push(test)
+                }
+                if(this.memory.queue[0].is == "basebreakattack") {
+                    let index = Memory.trios.indexOf(Memory.trios.filter((a)=>a.id===this.memory.queue[0].baseMemory.reserving)[0])
+                    report.formatImportant(this.room.name,"Trio attacker created")
+                    Memory.trios[index].mainCreep = test
+                }
+                if(this.memory.queue[0].is == "basebreakheal") {
+                    report.formatImportant(this.room.name,"Trio healer created")
+                    let index = Memory.trios.indexOf(Memory.trios.filter((a)=>a.id===this.memory.queue[0].baseMemory.reserving)[0])
+                    Memory.trios[index].healerCreeps.push(test)
                 }
                 report.formatBasic(this.room.name,"a creep type: "+this.memory.queue[0].is+" was created with error log: "+errorreg)
                 delete this.memory.queue[0]
@@ -99,6 +116,12 @@ Creep.prototype.placeRoadByPath = function(path:string|PathStep[],Suceedstorage:
 Room.prototype.isNearby = function(roomName) {
     let dist = Math.round(getTrueDistance(new RoomPosition(25,25,this.name),new RoomPosition(25,25,roomName))/50)
     if(dist<=1) return true; else return false;
+}
+Room.prototype.isSuitable = function(roomName) {
+    if(Game.rooms[roomName]===undefined) return true
+    if(Game.rooms[roomName].controller===undefined) return true
+    if(Game.rooms[roomName].controller?.level===0||Game.rooms[roomName].controller?.level===undefined) return true
+    return false
 }
 Room.prototype.getNearbyActive = function() {
     let retVal = []

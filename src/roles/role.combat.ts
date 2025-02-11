@@ -2,8 +2,11 @@
 
 import { RoomObject } from "../../typings/room-object";
 import { AnyOwnedStructure, Structure } from "../../typings/structure";
-function flee(creep:Creep, goal:RoomObject) {
-    let goals = [{ pos: goal.pos, range: 3 }];
+import { strengthCalc } from "../combatLibs/calcCreepPower";
+import { report } from "../libs/roomReporting"
+const StrCalc = new strengthCalc()
+function flee(creep:Creep, goal:RoomObject,range:number=3) {
+    let goals = [{ pos: goal.pos, range: range }];
     let ret =  PathFinder.search(
     creep.pos, goals,
     {
@@ -49,15 +52,30 @@ function flee(creep:Creep, goal:RoomObject) {
   return ret
 }
 function combatCalc(creep:Creep,target:RoomObject) {
-    if(creep.getActiveBodyparts(HEAL) > 0&&creep.saying !== "ATTACK"&&creep.hits<creep.hitsMax)  {
-        creep.heal(creep)
+    if(creep.getActiveBodyparts(HEAL) > 0&&creep.saying !== "ATTACK")  {
+        if(creep.hits<creep.hitsMax) {
+            creep.heal(creep)
+        } else {
+            let targetCreep = creep.pos.findClosestByRange(FIND_MY_CREEPS,{filter:(a)=>{
+                return (a.getActiveBodyparts(ATTACK)>0||a.getActiveBodyparts(RANGED_ATTACK)>0||a.getActiveBodyparts(HEAL)>0)&&
+                a.hits<a.hitsMax
+            }})
+            if(targetCreep) {
+                if(creep.heal(targetCreep)===ERR_NOT_IN_RANGE) {
+                    creep.moveTo(targetCreep)
+                }
+            }
+        }
     }
     if(creep.saying === undefined) {
         var lastAction = "none"
     } else {
         var lastAction = creep.saying
     }
-
+    if(StrCalc.canWinRoom(creep.room)===false) {
+        flee(creep,target,4)
+        return
+    }
     if(creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
             if(creep.pos.getRangeTo(target) < 3) {
                 let hide = creep.pos.findInRange(FIND_MY_STRUCTURES, 3, {filter: (structure:Structure) => {
@@ -65,7 +83,7 @@ function combatCalc(creep:Creep,target:RoomObject) {
                 }})
                 if(hide.length > 0) {
                     creep.moveTo(hide[0])
-                } else {
+                } else if(creep.getActiveBodyparts(ATTACK) === 0){
                     flee(creep,target)
                 }
             }
@@ -93,7 +111,8 @@ function combatCalc(creep:Creep,target:RoomObject) {
      * @returns
      */
     export function run(creep:Creep) {
-        if(Game.flags.attack === undefined) {
+
+        if((Game.flags.attack === undefined&&creep.memory.cachTarget===undefined)||creep.memory.defenseoverride===1) {
             var closestHostile:RoomObject|Creep|null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
                 return creep.owner.username !== "chungus3095"
             }});
@@ -107,6 +126,16 @@ function combatCalc(creep:Creep,target:RoomObject) {
                 creep.memory.stopmoving = 0;
                 combatCalc(creep, closestHostile)
                 return
+            } else if(creep.getActiveBodyparts(HEAL)>0){
+                let Tcreep = creep.room.find(FIND_MY_CREEPS,{filter:(a)=>
+                    a.hits<a.hitsMax
+                })
+                report.formatBasic("*",JSON.stringify(Tcreep))
+                if(Tcreep.length>0) {
+                    if(creep.heal(Tcreep[0])!==OK) {
+                        creep.moveTo(Tcreep[0])
+                    }
+                }
             }
             if(creep.getActiveBodyparts(HEAL) > 0&&creep.saying !== "ATTACK"&&creep.hits<creep.hitsMax)  {
                 creep.heal(creep)
@@ -151,14 +180,33 @@ function combatCalc(creep:Creep,target:RoomObject) {
                 creep.memory.patrolling = undefined
             }
     } else {
-        let theif
-        if(Game.flags.attack.room === undefined) {
-            theif = 1
-        } else {
-            theif = (Game.flags.attack.room.name !== creep.room.name)
+        if((creep.memory.defenseoverride == 0 || creep.memory.defenseoverride === undefined)&&Memory.defenserequests.length > 0) {
+            let respond = Memory.defenserequests.pop()
+            creep.memory.TX = respond.x; creep.memory.TY = respond.y
+            creep.memory.roomname = respond.room
+            creep.memory.defenseoverride = 1
+            creep.memory.wait=0
         }
+        if(creep.memory.cachTarget!==undefined) {
+            //@ts-ignore
+            var theFlag = new RoomPosition(creep.memory.cachTarget.x,creep.memory.cachTarget.y,creep.memory.cachTarget.roomName)
+        } else {
+            var theFlag = Game.flags.attack.pos
+            //@ts-ignore
+            creep.memory.cachTarget = theFlag
+        }
+        let theif
+        theif = (theFlag.roomName !== creep.room.name)
+
         if(theif) {
-            creep.moveTo(Game.flags.attack,{reusePath: 200,stroke: '#ff0000'})
+            creep.moveTo(theFlag,{reusePath: 200,stroke: '#ff0000'})
+            let target1 = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
+                return creep.owner.username !== "chungus3095"&&
+                (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
+            }});
+            if(target1) {
+                combatCalc(creep,target1)
+            }
         } else {
             let target1 = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
                 return creep.owner.username !== "chungus3095"
@@ -178,12 +226,23 @@ function combatCalc(creep:Creep,target:RoomObject) {
                 combatCalc(creep, target1)
             } else {
                 let target2:AnyOwnedStructure|AnyOwnedStructure[] = creep.room.find(FIND_HOSTILE_STRUCTURES);
+                if(target2[0]!==undefined) {
                 if(target2[0].structureType === STRUCTURE_CONTROLLER) {
                     target2 = target2[1]
                 } else {
                     target2 = target2[0]
                 }
                 combatCalc(creep, target2)
+                } else if(creep.getActiveBodyparts(HEAL)>0){
+                    let Tcreep = creep.room.find(FIND_MY_CREEPS,{filter:(a)=>a.hits<a.hitsMax
+                    })
+                    report.formatBasic("*",JSON.stringify(Tcreep))
+                    if(Tcreep.length>0) {
+                        if(creep.heal(Tcreep[0])!==OK) {
+                            creep.moveTo(Tcreep[0])
+                        }
+                    }
+                }
             }
         }
     }

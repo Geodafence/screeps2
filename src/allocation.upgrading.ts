@@ -31,7 +31,7 @@ import { AnyStructure } from "../typings/structure";
                     }
                 } else {
                     if(creep.withdraw(targets[0],RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(targets[0],{reusePath: 40})
+                        creep.moveTo(targets[0],{reusePath: 10})
                     }
                 }
 			} else {

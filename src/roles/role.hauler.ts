@@ -4,11 +4,12 @@ import { RoomObject } from "../../typings/room-object";
 
 import { Structure } from "../../typings/structure";
 import { isNull, isUndefined } from "lodash";
-import { report } from "./../libs/roomReporting";
+import { report } from "../libs/roomReporting";
+import { Id } from "../../typings/helpers";
 
-function flee(creep:Creep, goal:RoomObject) {
+function flee(creep:Creep, goal:RoomObject,range:number=6) {
     //@ts-ignore
-    let goals = { pos: goal.pos, range: 6 };
+    let goals = { pos: goal.pos, range: range };
     let ret = PathFinder.search(creep.pos, goals, {
         // We need to set the defaults costs higher so that we
         // can set the road cost lower in `roomCallback`
@@ -69,86 +70,46 @@ export function tick(creep:Creep, focuson:any) {
         if (creep.store[RESOURCE_OXYGEN] >= 0) {
             creep.drop(RESOURCE_OXYGEN);
         }
+        if(creep.memory.endearly === undefined) creep.memory.endearly = 0
         if (creep.memory.patrolling === undefined) {
-            var targetRoom;
-            var targetCreep;
-            var roomyoink;
-            var grab;
-            let suceeded = 0;
-            do {
-                grab = Math.floor(Math.random() * Memory.miningrooms.length);
-                roomyoink = Memory.longrangemining[grab];
-                if (creep.memory.lastRoom === undefined) {
-                    if (roomyoink.creeps !== undefined) {
-                        targetCreep = roomyoink.creeps;
-                        targetRoom = Memory.miningrooms[grab];
-                        suceeded = 1;
-                    }
-                } else if (Memory.miningrooms[grab].room !== creep.memory.lastRoom.room) {
-                    if (roomyoink.creeps !== undefined) {
-                        targetCreep = roomyoink.creeps;
-                        targetRoom = Memory.miningrooms[grab];
-                        suceeded = 1;
-                    }
-                }
-            } while (suceeded === 0 && targetCreep.length === 0);
-            creep.memory.targetCreeps = targetCreep;
-            creep.memory.patrolling = targetRoom;
-            creep.memory.lastRoom = targetRoom;
+            let LRMnew = Memory.longrangemining.filter((LRM)=>LRM.room!==undefined)
+            LRMnew.sort((a,b)=>Math.random()-Math.random())
+            var targetCreep:Id<Creep>|string[] = LRMnew[0].creeps
+            var targetRoom = {room: LRMnew[0].room}
+
             creep.memory.wait = 0;
             creep.memory.endearly = 0;
             creep.memory.cachTarget = undefined;
             creep.memory.cachsource = undefined;
-            creep.memory.spawnid = undefined;
+            creep.memory.targetCreeps = targetCreep;
+            creep.memory.patrolling = targetRoom;
+
         }
-        if(creep.getActiveBodyparts(CARRY)<=3&&Memory.haulerSatisfied>0) {
-        }
-        if (creep.memory.endearly === undefined) {
-            creep.memory.endearly = 0;
-        }
-        if (
-            //@ts-ignore
-            isNull(Game.getObjectById(creep.memory.spawnid)) ||
-            isUndefined(creep.memory.spawnid) ||
-            //@ts-ignore
-            creep.memory.spawnid === 0
-        ) {
-            /*
-            new focus system allows for active balancing rather than randomizing
-            let keys = []
-            for (var key in Game.spawns) {
-                keys.push(key);
-            }
-            let val= Game.spawns[keys[Math.floor(Math.random()*keys.length)]].id
-            if(val==="Spawn2") {
-                val= Game.spawns[keys[Math.floor(Math.random()*keys.length)]].id
-            }
-            */
-            let val = focuson;
-            if (Game.spawns[val]) {
-                creep.memory.spawnid = Game.spawns[val].id;
-            } else {
-                creep.say("bad spawn");
-            }
-        }
+
         new RoomVisual(creep.room.name).text(
             "Hauler, grabbing from room: " + creep.memory.patrolling.room,
             creep.pos.x,
             creep.pos.y + 1,
             { align: "center", font: 0.3, color: "red", stroke: "white", strokeWidth: 0.01 }
         );
+
         if (
             creep.pos.findInRange(FIND_HOSTILE_CREEPS, 5, {
                 filter: function (creep:Creep) {
-                    return creep.owner.username !== "chungus3095"
+                    return creep.owner.username !== "chungus3095" &&
+                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
-            }).length > 0
-        ) {
-            console.log("AFJAEOUFHEHFUOEWFHWI")
-            let goals:Creep = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,  {
-
+            }).length > 0 &&
+            creep.room.find(FIND_MY_CREEPS, {
                 filter: function (creep:Creep) {
-                    return creep.owner.username !== "chungus3095"
+                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                }
+            }).length === 0
+        ) {
+            let goals:Creep|null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,  {
+                filter: function (creep:Creep) {
+                    return creep.owner.username !== "chungus3095" &&
+                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             })
             if(goals!==null) flee(
@@ -172,28 +133,27 @@ export function tick(creep:Creep, focuson:any) {
         if (creep.memory.targetCreeps.length > 0 && creep.memory.targetCreeps[0] in Game.creeps) {
             let end = Game.creeps[creep.memory.targetCreeps[0]].pos.findClosestByRange(FIND_DROPPED_RESOURCES);
             if (!end) {
+                report.formatBasic(creep.room.name,"no resources inside this room!")
                 creep.memory.endearly += 5;
             }
         }
 
         if (creep.memory.targetCreeps.length == 0) {
-            creep.memory.endearly += 5;
+            if(creep.room.name===creep.memory.patrolling.room) {
+                let end = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+                if(!end) {
+                    report.formatBasic(creep.room.name,"no resources inside this room (no creeps edition)!")
+                    creep.memory.endearly += 5;
+                }
+            }
         }
-        //if (global.restartEco !== undefined) {
-        //    creep.memory.spawnid = restartEco.id;
-        //}
         if (creep.memory.patrolling.room !== creep.room.name && creep.memory.moving == false) {
-            //if(creep.memory.targetCreeps.length > 0) {
-            //    if(creep.memory.targetCreeps[0] in Memory.LRMpaths) {
-            //        creep.moveByPath(Memory.LRMpaths[creep.memory.targetCreeps[0]])
-            //    }
-            //} else {
+
             let move = new RoomPosition(25, 25, creep.memory.patrolling.room);
             Game.map.visual.line(creep.pos,move);
             Game.map.visual.circle(creep.pos,{stroke:"#66BB6A",fill:"#66BB6A",radius:1})
             //@ts-ignore
             creep.moveTo(move, { reusePath: 40, stroke: "white" });
-            // }
         } else if (creep.memory.moving == false) {
             //@ts-ignore
             if (creep.memory.cachTarget === undefined || !Game.getObjectById(creep.memory.cachTarget)) {
@@ -211,6 +171,7 @@ export function tick(creep:Creep, focuson:any) {
                 }
             }
             if (creep.memory.cachTarget === null) {
+                report.formatBasic(creep.room.name,"no cachetarget!")
                 creep.memory.endearly += 5;
             }
             //@ts-ignore
@@ -238,19 +199,6 @@ export function tick(creep:Creep, focuson:any) {
                 creep.memory.moving = false;
                 creep.memory.patrolling = undefined;
             }
-            //var targets = Game.getObjectById(creep.memory.spawnid).room.find(FIND_STRUCTURES, {
-            //        filter: (structure) => {
-            //            return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN || (Memory.longrangemining[1].creeps.length > 0 && structure.structureType == STRUCTURE_CONTAINER)|| (Memory.longrangemining[1].creeps.length > 0 && structure.structureType == STRUCTURE_TOWER)) &&
-            //                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-            //        }
-            //});
-            //targets = seededshuffle(targets,creep.memory.seed)
-            //if(targets.length > 0) {
-            //    if(creep.transfer(targets[0], RESOURCE_ENERGY) !== OK) {
-            //        creep.moveTo(targets[0], {reusePath: 10,visualizePathStyle: {stroke: '#ffffff'}});
-            //    }
-            //}
-
             if (
                 //@ts-ignore
                 Game.getObjectById(creep.memory.spawnid).room.storage &&
@@ -281,11 +229,10 @@ export function tick(creep:Creep, focuson:any) {
                             return (
                                 (structure.structureType == STRUCTURE_EXTENSION ||
                                     structure.structureType == STRUCTURE_SPAWN ||
-                                    (Memory.haulers.length > 6 && structure.structureType == STRUCTURE_STORAGE) ||
-                                    (Memory.haulers.length > 6 && structure.structureType == STRUCTURE_TOWER)) &&
+                                    (structure.structureType == STRUCTURE_STORAGE) ||
+                                    (structure.structureType == STRUCTURE_TOWER)) &&
                                 //@ts-ignore
-                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-                                structure.isActive()
+                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                             );
                         }
                     })
@@ -298,7 +245,6 @@ export function tick(creep:Creep, focuson:any) {
                         );
                     }
                 if (temp.length == 0) {
-                    creep.memory.spawnid = 0;
                 } else {
                     if (temp[0].id !== undefined && temp[0] !== undefined) {
                         creep.memory.cachsource = temp[0].id;
@@ -310,7 +256,8 @@ export function tick(creep:Creep, focuson:any) {
             //@ts-ignore
             let check = Game.getObjectById(creep.memory.spawnid).room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep:Creep) {
-                    return creep.owner.username !== "chungus3095"
+                    return creep.owner.username !== "chungus3095" &&
+                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             });
             if (check.length > 0) {
@@ -337,13 +284,16 @@ export function tick(creep:Creep, focuson:any) {
                 if (creep.transfer(Game.getObjectById(creep.memory.cachsource), RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     //@ts-ignore
                     if (creep.pos.inRangeTo(Game.getObjectById(creep.memory.cachsource), 7)) {
-                        //@ts-ignore
-                        creep.moveTo(Game.getObjectById(creep.memory.cachsource), {
-                            reusePath: 10,
-                            visualizePathStyle: { stroke: "#ffffff" },
-                            maxOps: 250
-                        });
+
+                            //@ts-ignore
+                            creep.moveTo(Game.getObjectById(creep.memory.cachsource), {
+                                reusePath: 10,
+                                visualizePathStyle: { stroke: "#ffffff" },
+                                maxOps: 250
+                            });
+
                     } else {
+
                         //@ts-ignore
                         creep.moveTo(Game.getObjectById(creep.memory.cachsource), {
                             reusePath: 90,
@@ -352,10 +302,6 @@ export function tick(creep:Creep, focuson:any) {
                     }
                 }
             }
-            // if(creep.transfer(Game.getObjectById(creep.memory.spawnid),RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            //     console.log(Game.getObjectById(creep.memory.spawnid))
-            //      creep.moveTo(Game.getObjectById(creep.memory.spawnid), {reusePath:40, stroke: 'white'});
-            // }
         }
 
         try {

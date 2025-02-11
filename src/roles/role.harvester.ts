@@ -11,14 +11,14 @@ import { Structure } from "../../typings/structure";
         }
         new RoomVisual(creep.room.name).text('Harvester, state: '+creep.memory.state, creep.pos.x, creep.pos.y+1, {align: 'center',font:0.3,color:'yellow',stroke:"white",strokeWidth:0.01});
 	    if(creep.memory.state == "mining") {
-            if(creep.memory.registeredsource === undefined || creep.memory.registeredsource == 0) {
-                creep.moveTo(9,5,{reusePath: 200})
-            }
+            //if(creep.memory.registeredsource === undefined || creep.memory.registeredsource == 0) {
+                //creep.moveTo(9,5,{reusePath: 200})
+            //}
             _register("usedsources", creep)
             let err = harvest(creep)
-            if(err == ERR_NOT_ENOUGH_RESOURCES) {
-                creep.moveTo(9,5,{reusePath: 200})
-            }
+            //if(err == ERR_NOT_ENOUGH_RESOURCES) {
+                //creep.moveTo(9,5,{reusePath: 200})
+            //}
             if(creep.store.getFreeCapacity() == 0) creep.memory.state = "storing"
         } else {
             if(creep.store[RESOURCE_ENERGY] == 0) {
@@ -29,14 +29,14 @@ import { Structure } from "../../typings/structure";
                 var targets = creep.room.find(FIND_MY_STRUCTURES, {
                         filter: (structure) => {
                             return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||  (Memory.longrangemining[Memory.longrangemining.length-1].creeps.length > 0 && structure.structureType == STRUCTURE_STORAGE)|| (Memory.longrangemining[Memory.longrangemining.length-1].creeps.length > 0 && structure.structureType == STRUCTURE_TOWER)) &&
-                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && structure.isActive();
+                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                         }
                 });
             } else {
                 var targets = creep.room.find(FIND_MY_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||  (structure.structureType == STRUCTURE_STORAGE)|| (structure.structureType == STRUCTURE_TOWER)) &&
-                            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && structure.isActive();
+                            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                     }
             });
             }

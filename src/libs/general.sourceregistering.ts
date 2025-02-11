@@ -75,7 +75,7 @@ import { Lremove } from "./general.functions";
         return -1
     }
 
-    export function remove(memlink:string, creep:Creep|{memory:CreepMemory}, override=false, overridebase=0) {
+    export function remove(memlink:string, creep:Creep|{memory:CreepMemory}, override=false, overridebase:number|{}=0) {
         // If the creep has a registered source
         if(creep.memory.registeredsource !== 0 || creep.memory.registeredsource !== undefined) {
             if(override) {
