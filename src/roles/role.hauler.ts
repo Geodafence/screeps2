@@ -6,6 +6,7 @@ import { Structure } from "../../typings/structure";
 import { isNull, isUndefined } from "lodash";
 import { report } from "../libs/roomReporting";
 import { Id } from "../../typings/helpers";
+import { Allies } from "../libs/allyLibs/allyConsts"
 
 function flee(creep:Creep, goal:RoomObject,range:number=6) {
     //@ts-ignore
@@ -96,7 +97,7 @@ export function tick(creep:Creep) {
         if (
             creep.pos.findInRange(FIND_HOSTILE_CREEPS, 5, {
                 filter: function (creep:Creep) {
-                    return creep.owner.username !== "chungus3095" &&
+                    return Allies.indexOf(creep.owner.username) !== -1 &&
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             }).length > 0 &&
@@ -108,7 +109,7 @@ export function tick(creep:Creep) {
         ) {
             let goals:Creep|null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,  {
                 filter: function (creep:Creep) {
-                    return creep.owner.username !== "chungus3095" &&
+                    return Allies.indexOf(creep.owner.username) !== -1 &&
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             })
@@ -263,7 +264,7 @@ export function tick(creep:Creep) {
             //@ts-ignore
             let check = Game.getObjectById(creep.memory.spawnid).room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep:Creep) {
-                    return creep.owner.username !== "chungus3095" &&
+                    return Allies.indexOf(creep.owner.username) !== -1 &&
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             });

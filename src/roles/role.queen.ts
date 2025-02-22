@@ -1,6 +1,7 @@
 import { fufillrequest, getrequest } from "../libs/item-request-lib"
 import { getTrueDistance } from "../libs/general.functions"
 import { report } from "../libs/roomReporting"
+import { Allies } from "../libs/allyLibs/allyConsts"
 import { AnyStoreStructure, Structure, StructureLink } from "../../typings/structure"
 /**
  *
@@ -106,7 +107,7 @@ function getMasterLink(masterSpawn:StructureSpawn) {
 
             }
             let check = creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep) {
-                return creep.owner.username !== "chungus3095"
+                return Allies.indexOf(creep.owner.username) !== -1
             }});
             if(check.length > 0) {
                 target = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (structure) => {

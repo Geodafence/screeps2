@@ -4,6 +4,8 @@ import { RoomObject } from "../../typings/room-object";
 import { AnyOwnedStructure, Structure } from "../../typings/structure";
 import { strengthCalc } from "../libs/combatLibs/calcCreepPower";
 import { report } from "../libs/roomReporting"
+import { Allies } from "../libs/allyLibs/allyConsts"
+
 const StrCalc = new strengthCalc()
 function flee(creep:Creep, goal:RoomObject,range:number=6) {
     //@ts-ignore
@@ -94,7 +96,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
                 }
             }
             if(creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3,{filter: function(creep:Creep) {
-                return creep.owner.username !== "chungus3095"
+                return Allies.indexOf(creep.owner.username) !== -1
             }}).length > 10) {
                 creep.rangedMassAttack()
             } else creep.rangedAttack(target)
@@ -120,7 +122,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
 
         if((Game.flags.attack === undefined&&creep.memory.cachTarget===undefined)||creep.memory.defenseoverride===1) {
             var closestHostile:Creep|Creep[]|RoomObject[]|RoomObject|null = creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
-                return creep.owner.username !== "chungus3095"
+                return Allies.indexOf(creep.owner.username) !== -1
             }})
             .sort((a,b)=>(a.pos.getRangeTo(creep)+
             (Number(a.getActiveBodyparts(ATTACK)>0||a.getActiveBodyparts(RANGED_ATTACK)>0||a.getActiveBodyparts(HEAL)>0)*70))
@@ -132,7 +134,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
             if(!closestHostile) {
                 closestHostile = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES,{filter: function(creep:Structure) {
                     //@ts-ignore
-                    return creep.owner.username !== "chungus3095"&&creep.structureType!==STRUCTURE_POWER_BANK
+                    return Allies.indexOf(creep.owner.username) !== -1&&creep.structureType!==STRUCTURE_POWER_BANK
                 }});
             }
             if (closestHostile&&(creep.room.name===creep.memory.roomname||creep.memory.defenseoverride===0)) {
@@ -218,7 +220,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
         if(theif) {
             creep.moveTo(theFlag,{reusePath: 200,stroke: '#ff0000'})
             let target1 = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
-                return creep.owner.username !== "chungus3095"&&
+                return Allies.indexOf(creep.owner.username) !== -1&&
                 (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
             }});
             if(creep.memory.targetCreep===undefined) {
@@ -237,7 +239,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
             }
         } else {
             let sort = creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
-                return creep.owner.username !== "chungus3095"
+                return Allies.indexOf(creep.owner.username) !== -1
             }})
             .sort((a,b)=>(b.pos.getRangeTo(creep)+
             (Number(b.getActiveBodyparts(ATTACK)>0||b.getActiveBodyparts(RANGED_ATTACK)>0||b.getActiveBodyparts(HEAL)>0)*70))

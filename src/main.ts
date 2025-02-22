@@ -27,6 +27,7 @@ import { findSuitableRemotes } from "./libs/econLibs/findRemotes"
 import { Structure, StructureController, StructureLink, StructureTower } from '../typings/structure';
 import { useRoadPlanner } from './libs/baseBuildingLibs/roadPlanner';
 import { createAndUpdateCheckerSite } from './libs/baseBuildingLibs/checkerboardBuilder';
+import { Allies } from './libs/allyLibs/allyConsts';
 
 if ("harvesters" in Memory != true) {
     // Initialization of memory properties for the first loop
@@ -262,19 +263,19 @@ export const loop = ErrorMapper.wrapLoop(() => {
             let tower: StructureTower = towers[towerold]
             let attackers: Creep[] = tower.room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep: Creep) {
-                    return creep.owner.username !== "chungus3095"
+                    return Allies.indexOf(creep.owner.username) !== -1
                 }
             }).sort((a: Creep, b: Creep) => a.hits - b.hits)
             if (attackers.length > 0) {
                 let healers = tower.room.find(FIND_HOSTILE_CREEPS, {
                     filter: function (creep: Creep) {
-                        return creep.owner.username !== "chungus3095" && creep.getActiveBodyparts(HEAL) > 0
+                        return Allies.indexOf(creep.owner.username) !== -1 && creep.getActiveBodyparts(HEAL) > 0
                     }
                 })
                 if (towerdata.attackedhealer === 1) {
                     attackers = tower.room.find(FIND_HOSTILE_CREEPS, {
                         filter: function (creep: Creep) {
-                            return creep.owner.username !== "chungus3095"
+                            return Allies.indexOf(creep.owner.username) !== -1
                         }
                     }).sort((a: Creep, b: Creep) => a.getActiveBodyparts(HEAL) - b.getActiveBodyparts(HEAL))
                 }
