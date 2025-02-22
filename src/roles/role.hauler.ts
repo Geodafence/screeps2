@@ -165,6 +165,7 @@ export function tick(creep:Creep, focuson:any) {
                     }
                 });
                 if (nullcheck !== null) {
+                    report.formatBasic("*","reason4?")
                     creep.memory.cachTarget = nullcheck.id;
                 } else {
                     creep.memory.cachTarget = nullcheck;
@@ -208,6 +209,7 @@ export function tick(creep:Creep, focuson:any) {
                 //@ts-ignore
                 const leepicstorage = Game.getObjectById(creep.memory.spawnid).room.storage;
                 if (leepicstorage.id !== undefined) {
+
                     creep.memory.cachsource = leepicstorage.id;
                 } else {
                     creep.say("bad storage");
@@ -230,7 +232,8 @@ export function tick(creep:Creep, focuson:any) {
                                 (structure.structureType == STRUCTURE_EXTENSION ||
                                     structure.structureType == STRUCTURE_SPAWN ||
                                     (structure.structureType == STRUCTURE_STORAGE) ||
-                                    (structure.structureType == STRUCTURE_TOWER)) &&
+                                    (structure.structureType == STRUCTURE_TOWER) ||
+                                    (structure.structureType == STRUCTURE_CONTAINER)) &&
                                 //@ts-ignore
                                 structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                             );
@@ -245,6 +248,10 @@ export function tick(creep:Creep, focuson:any) {
                         );
                     }
                 if (temp.length == 0) {
+                    try {
+                        //@ts-ignore
+                        flee(creep,Game.getObjectById(creep.memory.spawnid),4)
+                    } catch(e) {console.log(e)}
                 } else {
                     if (temp[0].id !== undefined && temp[0] !== undefined) {
                         creep.memory.cachsource = temp[0].id;
@@ -260,19 +267,21 @@ export function tick(creep:Creep, focuson:any) {
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             });
-            if (check.length > 0) {
+            let oh = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                filter: (struct:Structure) => {
+                    return struct.structureType == STRUCTURE_TOWER;
+                }
+            });
+            if (check.length > 0&&oh) {
                 //@ts-ignore
-                creep.memory.cachsource = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                    filter: (struct:Structure) => {
-                        return struct.structureType == STRUCTURE_TOWER;
-                    }
-                }).id;
+
+                if(oh) creep.memory.cachsource = oh.id
             } else {
                 //@ts-ignore
                 if(!Game.getObjectById(creep.memory.cachsource)) {
                     creep.memory.cachsource = undefined;
                     //@ts-ignore
-                } else if (Game.getObjectById(creep.memory.cachsource).structureType == STRUCTURE_TOWER) {
+                } else if (Game.getObjectById(creep.memory.cachsource).structureType == STRUCTURE_TOWER&&check.length>1) {
                     creep.memory.cachsource = undefined;
                 }
             }

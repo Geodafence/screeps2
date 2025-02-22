@@ -52,11 +52,23 @@ export function tick() {
                 }
             }
         }
+        if(Memory.miningrooms.some((a)=>a.room===Memory.longrangemining[temp].room)===false) {
+            Memory.longrangemining.splice(temp,1)
+            break;
+        }
+        if(Memory.miningrooms.filter((a)=>a.room===Memory.longrangemining[temp].room).length>1) {
+            Memory.longrangemining.splice(temp,1)
+            break;
+        }
         // If no creeps are currently wanted for mining, check if there's a creep available to send
         if (Memory.longrangemining[temp].wantcreeps == 0) {
             if (Memory.longrangemining[temp].creeps.length > 0) {
                 // Move an existing creep to the room to estimate the required miners
                 let creep = Game.creeps[Memory.longrangemining[temp].creeps[0]];
+                if(creep===undefined) {
+                    Memory.longrangemining[temp].creeps.shift()
+                    return
+                }
                 let roompos = new RoomPosition(25, 25, RoomObject.room);
                 creep.moveTo(roompos, { reusePath: 40, visualizePathStyle: { stroke: '#ffffff' } });
 
@@ -107,6 +119,7 @@ export function tick() {
                         })
                         if (check) {
                             if (claimer.reserveController(check[0]) == ERR_NOT_IN_RANGE) claimer.moveTo(check[0],{reusePath:40})
+                            else if(claimer.room.controller?.sign?.username!==claimer.owner.username) claimer.signController(check[0],"01000111 01100101 01101111 00100000 01101101 01101001 01101110 01101001 01101110 01100111")
                         }
                     }
                 } else {
@@ -138,7 +151,7 @@ export function tick() {
                 hostiles = creep.room.find(FIND_HOSTILE_CREEPS, {
                     filter: function (creep:Creep) {
                         return creep.owner.username !== "chungus3095" &&
-                        (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                        (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL)||creep.getActiveBodyparts(CLAIM))
                     }
                 })
                 let friendly = creep.room.find(FIND_MY_CREEPS, {
@@ -179,13 +192,14 @@ export function tick() {
                         }
                         if (creep.store[RESOURCE_ENERGY] > 40) {
                             creep.memory.check = 1
-                            let linkmining: StructureLink[] = []
+                            let linkmining:StructureLink[] = []
                             if (creep.memory.linktomine === undefined) {
+                                //@ts-ignore
                                 linkmining = creep.pos.findInRange(FIND_MY_STRUCTURES, 3, {
-                                    filter: function (structure: AnyStoreStructure) {
-                                        return structure.structureType === STRUCTURE_LINK
+                                    filter: function (structure) {
+                                        return structure.structureType === "link"
                                     }
-                                }).sort((a:RoomObject,b:RoomObject)=>a.pos.getRangeTo(creep)-b.pos.getRangeTo(creep))
+                                }).sort((a,b)=>a.pos.getRangeTo(creep)-b.pos.getRangeTo(creep))
                                 if (linkmining.length > 0) {
                                     creep.moveTo(linkmining[0])
                                     creep.memory.linktomine = linkmining[0].id
@@ -224,7 +238,7 @@ export function tick() {
                         if (creep.store[RESOURCE_ENERGY] > 40) {
                             creep.memory.check = 1
                             let linkmining = creep.pos.findInRange(FIND_MY_STRUCTURES, 3, {
-                                filter: function (structure: AnyStoreStructure) {
+                                filter: function (structure) {
                                     return structure.structureType === STRUCTURE_LINK
                                 }
                             })

@@ -71,7 +71,9 @@ import { removerequests, sendrequest } from "./item-request-lib";
             Memory.structures = {}
         }
         if(Memory.structures[building.id]===undefined) {
-            Memory.structures[building.id]={}
+            Memory.structures[building.id]={data: {storedRequests: {
+
+            }}}
         }
         if(Memory.structures[building.id].marketStatus===undefined) {
             Memory.structures[building.id].marketStatus=getBestDeal(building,RESOURCE_OXYGEN)

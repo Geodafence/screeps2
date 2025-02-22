@@ -104,17 +104,16 @@ export class strengthCalc implements reportConstructor {
             rangedPower: 0,
             healingPower: 0
         }
-        constructor.meleePower = creep.getActiveBodyparts(ATTACK) * ATTACK_POWER
+        constructor.meleePower = (creep.getActiveBodyparts(ATTACK) * ATTACK_POWER)/3
         constructor.rangedPower = creep.getActiveBodyparts(RANGED_ATTACK) * RANGED_ATTACK_POWER
         constructor.healingPower = creep.getActiveBodyparts(HEAL) * HEAL_POWER
 
         let HPuntilsquishy = 0
-        /*for (let part of creep.body) {
+        for (let part of creep.body) {
             if (part.type === MOVE || part.type === TOUGH) {
                 HPuntilsquishy += part.hits
             } else break;
-        }*/
-        constructor.HPpower = 0
+        }
 
         if (constructor.meleePower === 0 && constructor.rangedPower === 0 && constructor.healingPower === 0) {
             constructor.estimatedPower = 0
@@ -166,7 +165,7 @@ export class strengthCalc implements reportConstructor {
             healingPower: 0
         }
 
-        let creeps = room.find(FIND_CREEPS)
+        let creeps = room.find(FIND_MY_CREEPS)
 
         for(let creep of creeps) {
             totalPower = combineCombatPower(totalPower,this.getCreepPower(creep))

@@ -104,7 +104,8 @@ function a() {
 }*/
 
 export function checkharvwant(ref: string | number) {
-    if(Game.spawns[ref].room.controller.level<7) {
+        //@ts-ignore
+    if (Game.spawns[ref].room.controller.level < 7) {
         return Game.spawns[ref].room.find(FIND_SOURCES).length + 1;
     } else {
         return 1
@@ -112,7 +113,7 @@ export function checkharvwant(ref: string | number) {
 }
 export function newharvcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    if ((global.defenseNeeded >= 20&&Memory.fighters.length<4) || global.createdunit == 1 || Game.spawns[spawnname].room.controller === undefined) {
+    if ((global.defenseNeeded >= 20 && Memory.fighters.length < 4) || global.createdunit == 1 || Game.spawns[spawnname].room.controller === undefined) {
         return
     }
     let type = "harv"
@@ -170,7 +171,7 @@ export function newharvcheck(spawnname: string) {
     allstorescheck = Memory.storecache
     type = "LRM"
     //@ts-ignore
-    if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1||(Memory.longrangemining[0].creeps.length===0&&Memory.longrangemining.length>0))) {
+    if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1 || (Memory.longrangemining[0].creeps.length === 0 && Memory.longrangemining.length > 0))) {
         allstores = 0
         allstorescheck = allstores
     }
@@ -214,9 +215,11 @@ export function newharvcheck(spawnname: string) {
         buildercost = global.cache[spawnname + "Ucache" + type].cost
     }
     if (Memory.storedcreeps.length == 0) {
+        //report.formatBasic("debug","1")
         if (Game.spawns[spawnname].room.energyAvailable >= buildercost) {
-
-            if (Game.spawns[spawnname].spawning === null&& Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade >= 1) {
+            //report.formatBasic("debug","2")
+            if (Game.spawns[spawnname].spawning === null && Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade >= 1) {
+                //report.formatBasic("debug","3")
                 createminer(allmodules, spawnname)
                 return
             }
@@ -269,7 +272,7 @@ export function newharvcheck(spawnname: string) {
                 Game.spawns[spawnname].room.getMasterSpawn().memory.minharvs = []
             }
             let minerals = Game.spawns[spawnname].room.find(FIND_MINERALS, {
-                filter: function (a:Mineral) {
+                filter: function (a: Mineral) {
                     return a.mineralAmount > 0
                 }
             })
@@ -319,16 +322,21 @@ export function createminer(modules: BodyPartConstant[], spawnname: string | num
     }
 }
 export function checkbuildwant(ref: string | number) {
-    if(Memory.isswc) {
+    if (Memory.isswc) {
+        //@ts-ignore
         if (Game.spawns[ref].room.controller !== undefined && (Game.spawns[ref].room.controller.level >= 7)) {
             return 4
+        //@ts-ignore
+        } else if ((Game.spawns[ref].room.controller.level >= 4)) {
+            return 7
         } else {
-            return Game.spawns[ref].room.find(FIND_SOURCES).length * 2 + 4
+            return 14
         }
     } else {
-    //@ts-ignore
+        //@ts-ignore
         if (Game.spawns[ref].room.controller !== undefined && (Game.spawns[ref].room.controller.level > 4)) {
-            if((Game.spawns[ref].room.controller.level >= 7)) {
+            //@ts-ignore
+            if ((Game.spawns[ref].room.controller.level >= 7)) {
                 return 2
             } else {
                 return 4
@@ -340,7 +348,7 @@ export function checkbuildwant(ref: string | number) {
 }
 export function newbuildcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    if (global.createdunit == 1 || (global.defenseNeeded >= 20&&Memory.fighters.length<4)) {
+    if (global.createdunit == 1 || (global.defenseNeeded >= 20 && Memory.fighters.length < 4)) {
         return
     }
     var type = "builder"
@@ -363,19 +371,19 @@ export function newbuildcheck(spawnname: string) {
             [WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
             [MOVE, MOVE, MOVE, CARRY, CARRY, WORK, WORK, WORK],
         ]
-        if(Memory.isswc) {
+        if (Memory.isswc) {
             milestones = {
                 20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY],
-                30: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY],
-                50: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                30: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                //50: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
             }
         } else {
-        //@ts-ignore
+            //@ts-ignore
             if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level > 4)) {
                 milestones = {
                     20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY],
-                    50: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
-                }
+                    50: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]
+                };
             } else {
                 milestones = {
                     //20:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
@@ -403,9 +411,14 @@ export function newbuildcheck(spawnname: string) {
         allmodules = global.cache[spawnname + "Ucache" + type].modules
         buildercost = global.cache[spawnname + "Ucache" + type].cost
     }
+    report.formatBasic("debug2", String(Memory.haulerSatisfied))
     Memory.builderlevel = allstores
-    if (Game.spawns[spawnname].room.energyAvailable >= buildercost&&(Memory.haulers.length>=global.haulercreations||Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade===0)) {
-        if (checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length) {
+    let mSpawn: StructureSpawn = Game.spawns[spawnname].room.getMasterSpawn()
+    //@ts-ignore
+    let buildNeedBool = Game.spawns[spawnname].room.controller.level < 4 ? checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length :
+        (checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0) && mSpawn.memory.queen !== undefined && mSpawn.memory.queen2 !== undefined
+    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && (true || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
+        if (buildNeedBool) {
             if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length) || (Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
                 if (Game.spawns[spawnname].spawning == null) {
                     createbuild(spawnname, allmodules)
@@ -416,9 +429,11 @@ export function newbuildcheck(spawnname: string) {
     }
 }
 export function newhaulercheck(spawnname: string) {
+        //@ts-ignore
+    let build = (Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.general >= 1 || Game.spawns[spawnname].room.controller.level < 5 || !Memory.isswc)
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    if (global.createdunit == 1 || (global.defenseNeeded >= 20&&Memory.fighters.length<4)) {
-        report.formatBasic("debug","?!")
+    if (global.createdunit == 1 || (global.defenseNeeded >= 20 && Memory.fighters.length < 4)) {
+        report.formatBasic("debug", "?!")
         return
     }
     var type = "hauler"
@@ -428,8 +443,9 @@ export function newhaulercheck(spawnname: string) {
     let allstorescheck = Memory.storecache
     //@ts-ignore
     if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1 ||
-        ((Memory.haulers.length < 1) && Memory.haulerneeded > 0) ||
-        (Game.spawns[spawnname].room.storage && Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined && Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined && Game.spawns[spawnname].room.controller.level<7)
+        (((Memory.haulers.length < 1) && Memory.haulerneeded > 0) || (Memory.isswc && Memory.haulers.length <= global.haulercreations / 2)) ||
+        //@ts-ignore
+        (Game.spawns[spawnname].room.storage && Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined && Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined && Game.spawns[spawnname].room.controller.level < 7)
     )) {
         allstores = 0
         allstorescheck = allstores
@@ -452,14 +468,21 @@ export function newhaulercheck(spawnname: string) {
             [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
             [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
         ]
-        milestones = {
-            20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
-            //after testing again, return on investment is absolutely not worthwhile at this point in time
-            //EDIT: due to cpu costs, I need to use this
-            //EDIT EDIT: this kills eco, why??????
-            //EDIT EDIT EDIT: ima try this again, fuck you past Geo
-            //EDIT EDIT EDIT EDIT: i'm using this at 50 extensions to support the significant reduction of creeps after reaching rcl 7
-            50:[MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+        if (Memory.isswc) {
+            milestones = {
+                20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+                50: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]
+            }
+        } else {
+            milestones = {
+                20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+                //after testing again, return on investment is absolutely not worthwhile at this point in time
+                //EDIT: due to cpu costs, I need to use this
+                //EDIT EDIT: this kills eco, why??????
+                //EDIT EDIT EDIT: ima try this again, fuck you past Geo
+                //EDIT EDIT EDIT EDIT: i'm using this at 50 extensions to support the significant reduction of creeps after reaching rcl 7
+                50: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]
+            }
         }
         if (global.inDeficit == 1) {
             allstores = global.deficitLevel
@@ -485,7 +508,9 @@ export function newhaulercheck(spawnname: string) {
 
     if (Game.spawns[spawnname].room.energyAvailable >= buildercost) {
         let queenCheck = (Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined) ||
-        (Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined&&Game.spawns[spawnname].room.controller.level<7)
+            //@ts-ignore
+            (Game.spawns[spawnname].room.getMasterSpawn().memory.queen2 === undefined && (Memory.isswc || Game.spawns[spawnname].room.controller.level < 7))
+            //@ts-ignore
         let controllerCheck = (Game.spawns[spawnname].room.controller !== undefined && Game.spawns[spawnname].room.controller.level > 3)
         //@ts-ignore
         if (queenCheck && controllerCheck && Game.spawns[spawnname].room.storage) {
@@ -505,23 +530,28 @@ export function newhaulercheck(spawnname: string) {
     }
 
     Memory.haulerlevel = allstores
-    console.log(Memory.haulerneeded)
+    //console.log(Memory.haulerneeded)
     Memory.haulerSatisfied = Math.ceil((Memory.haulerneeded) / (allmodules.length / 2))
-    report.formatBasic("debug",String(Memory.haulerSatisfied))
-    if(Memory.isswc) if(Memory.haulerSatisfied>4&&Game.cpu.getUsed()>Game.cpu.limit*0.75) Memory.haulerSatisfied = 4
-    if(Memory.isswc) if(Memory.haulerSatisfied>10&&Game.spawns[spawnname].room.controller.level>=4&&Game.spawns[spawnname].room.controller.level<7) Memory.haulerSatisfied = 10
+    report.formatBasic("debug", String(Memory.haulerSatisfied))
+
+    //if(Memory.isswc) if(Memory.haulerSatisfied>4&&Game.cpu.getUsed()>Game.cpu.limit*0.75) Memory.haulerSatisfied = 4
+    if (Memory.isswc) {
+            //@ts-ignore
+        if (Memory.haulerSatisfied > 7 && Game.spawns[spawnname].room.controller.level >= 4 && Game.spawns[spawnname].room.controller.level < 7) Memory.haulerSatisfied = 7
+    }
     //if(Game.spawns[spawnname].room.controller.level<3&&Memory.haulerSatisfied>10) Memory.haulerSatisfied = 10
 
     if (
         Memory.haulerneeded > 0 &&
         Game.spawns[spawnname].room.energyAvailable >= buildercost &&
         Memory.haulers.length < Memory.haulerSatisfied &&
-        Memory.longrangemining[0].creeps.length>0
+        Memory.longrangemining[0].creeps.length > 0 &&
+        build
     ) {
         const hasUpgradeAllocation = Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade >= 1;
         // @ts-ignore
         const hasQueenOrLowController = Game.spawns[spawnname].room.getMasterSpawn().memory.queen !== undefined ||
-                                    (Game.spawns[spawnname].room.controller?.level ?? 0) <= 3;
+            (Game.spawns[spawnname].room.controller?.level ?? 0) <= 3;
         const hasFewHaulers = Memory.haulers.length < 3;
 
         if (hasUpgradeAllocation || hasQueenOrLowController) {
@@ -538,9 +568,15 @@ export function newhaulercheck(spawnname: string) {
             }
         }
     }
+    let upgrade = 2
+        //@ts-ignore
+    if(Game.spawns[spawnname].room.controller.level>=7) upgrade = 2
     //@ts-ignore
     if (Game.spawns[spawnname].room.energyAvailable >= buildercost && (Game.spawns[spawnname].room.controller !== undefined && Game.spawns[spawnname].room.controller.level >= 4)) {
-        if (Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill === undefined && checkbuildwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length) {
+        if ((Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill.length < 1
+            || (Memory.isswc && Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill.length < upgrade))
+            && (checkbuildwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length || Memory.isswc)&&
+            Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.general >= 1) {
             if (Game.spawns[spawnname].spawning == null) {
                 global.createdunit = 1
                 createUpgradeRefill(spawnname, allmodules)
@@ -550,7 +586,8 @@ export function newhaulercheck(spawnname: string) {
 }
 export function newcombatcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    if ((global.createdunit == 1 || global.defenseNeeded < 20) && Game.flags.attack === undefined) {
+    console.log(Game.spawns[spawnname].room.name, "test")
+    if ((global.createdunit == 1 || (global.defenseNeeded < 20 && Memory.harass.length === 0)) && Game.flags.attack === undefined) {
         return
     }
     var allstores = Memory.storecache
@@ -558,8 +595,8 @@ export function newcombatcheck(spawnname: string) {
     var buildercost
     let allstorescheck = Memory.storecache
     var allmodulelevels = [
-        [TOUGH, MOVE, MOVE,RANGED_ATTACK],
-        [TOUGH, MOVE, MOVE,RANGED_ATTACK],
+        [TOUGH, MOVE, MOVE, RANGED_ATTACK],
+        [TOUGH, MOVE, MOVE, RANGED_ATTACK],
         [TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, MOVE],
         [TOUGH, TOUGH, MOVE, MOVE, ATTACK, RANGED_ATTACK, MOVE],
         [TOUGH, MOVE, MOVE, MOVE, TOUGH, ATTACK, RANGED_ATTACK, MOVE],
@@ -569,14 +606,15 @@ export function newcombatcheck(spawnname: string) {
     milestones = {
         20: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, MOVE, HEAL],
         30: [TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, HEAL, HEAL],
-        40: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, HEAL, HEAL, HEAL]
+        40: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, HEAL, HEAL, HEAL],
+        50: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, HEAL, HEAL, HEAL, HEAL, HEAL]
     }
     if (allmodulelevels.length - 1 < allstores) {
         allstores = allmodulelevels.length - 1
 
     }
     //@ts-ignore
-    if ((Game.spawns[spawnname].room.controller !== undefined && Game.spawns[spawnname].room.controller.level == 1) || (Game.spawns[spawnname].room.storage!==undefined&&Game.spawns[spawnname].room.storage?.store[RESOURCE_ENERGY]<=50000)) {
+    if ((Game.spawns[spawnname].room.controller !== undefined && Game.spawns[spawnname].room.controller.level == 1)) {
         allstores = 0
         allstorescheck = allstores
     }
@@ -590,12 +628,22 @@ export function newcombatcheck(spawnname: string) {
         }
     }
     Memory.combatlevel = allstores
-    if ((Game.spawns[spawnname].room.energyAvailable >= buildercost)) {
-        if ((Memory.fighters.length < 4)) {
+    let spawn = Game.spawns[spawnname]
+
+    let bool = true
+    if(spawn.room.storage) {
+        bool = spawn.room.storage.store[RESOURCE_ENERGY] > 100000 || global.defenseNeeded >= 20
+    }
+    console.log(Game.spawns[spawnname].room.name, "Combat check")
+    if ((Game.spawns[spawnname].room.energyAvailable >= buildercost && global.createdunit !== 1) && (bool)) {
+        if ((Memory.fighters.length < 4) || Memory.harass.length > 0) {
             if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)) {
                 if (Game.spawns[spawnname].spawning == null) {
-
-                    let returnCode = createcombat(spawnname, allmodules)
+                    if ((global.defenseNeeded >= 20 || Game.flags.attack !== undefined) && Memory.fighters.length < 4) {
+                        let returnCode = createcombat(spawnname, allmodules)
+                    } else {
+                        let returnCode = createharasser(spawnname, allmodules)
+                    }
                 }
             }
         }
@@ -623,7 +671,7 @@ export function createclaimer(spawnname: string | number, moduledata: BodyPartCo
         var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
             memory: { spawnid: Game.spawns[spawnname].id }
         })
-        report.formatBasic(Game.spawns[spawnname].room.name,"a claimer was created with error log: "+errorreg)
+        report.formatBasic(Game.spawns[spawnname].room.name, "a claimer was created with error log: " + errorreg)
         if (errorreg == 0) {
             Memory.claimers[regas] = test
         }
@@ -637,7 +685,7 @@ export function createqueen(spawnname: string | number, moduledata: BodyPartCons
     var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
         memory: { spawnid: Game.spawns[spawnname].id }
     })
-    report.formatBasic(Game.spawns[spawnname].room.name,"a queen was created with error log: "+errorreg)
+    report.formatBasic(Game.spawns[spawnname].room.name, "a queen was created with error log: " + errorreg)
     if (errorreg == 0) {
         global.createdunit = 1
         if (Game.spawns[spawnname].room.getMasterSpawn().memory.queen === undefined) {
@@ -653,9 +701,13 @@ export function createUpgradeRefill(spawnname: string | number, moduledata: Body
     var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
         memory: { level: Memory.haulerlevel, spawnid: Game.spawns[spawnname].id }
     })
-    report.formatBasic(Game.spawns[spawnname].room.name,"an upgrade refiller was created with error log: "+errorreg)
+    report.formatBasic(Game.spawns[spawnname].room.name, "an upgrade refiller was created with error log: " + errorreg)
     if (errorreg == OK) {
-        Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill = test
+        if (typeof Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill === "undefined"
+            || typeof Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill === "string") {
+            Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill = []
+        }
+        Game.spawns[spawnname].room.getMasterSpawn().memory.upgradeRefill.push(test)
     }
 }
 export function createhauler(spawnname: string | number, moduledata: BodyPartConstant[]) {
@@ -663,7 +715,7 @@ export function createhauler(spawnname: string | number, moduledata: BodyPartCon
     var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
         memory: { level: Memory.haulerlevel, spawnid: Game.spawns[spawnname].id }
     })
-    report.formatBasic(Game.spawns[spawnname].room.name,"a hauler was created with error log: "+errorreg)
+    report.formatBasic(Game.spawns[spawnname].room.name, "a hauler was created with error log: " + errorreg)
     if (errorreg == OK) {
         global.createdunit = 1
         hauler(test);
@@ -674,18 +726,32 @@ export function createbuild(spawnname: string | number, moduledata: BodyPartCons
     var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
         memory: { level: Memory.builderlevel }
     })
-    report.formatBasic(Game.spawns[spawnname].room.name,"a builder was created with error log: "+errorreg)
+    report.formatBasic(Game.spawns[spawnname].room.name, "a builder was created with error log: " + errorreg)
     if (errorreg == 0) {
         global.createdunit = 1
         Game.spawns[spawnname].room.getMasterSpawn().memory.builders.push(test)
     }
 }
+export function createharasser(spawnname: string | number, moduledata: BodyPartConstant[]) {
+    var test = newid()
+    var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
+        memory: { level: Memory.combatlevel, room: Memory.harass.shift() }
+    })
+    Memory.harass.splice(0, 1)
+    report.formatBasic(Game.spawns[spawnname].room.name, "a harasser creep was created with error log: " + errorreg)
+    if (errorreg == 0) {
+        global.createdunit = 1
+        Memory.harassers.push(test)
+    }
+    return errorreg
+}
+
 export function createcombat(spawnname: string | number, moduledata: BodyPartConstant[]) {
     var test = newid()
     var errorreg = Game.spawns[spawnname].spawnCreep(moduledata, test, {
         memory: { level: Memory.combatlevel }
     })
-    report.formatBasic(Game.spawns[spawnname].room.name,"a combat creep was created with error log: "+errorreg)
+    report.formatBasic(Game.spawns[spawnname].room.name, "a combat creep was created with error log: " + errorreg)
     if (errorreg == 0) {
         global.createdunit = 1
         combat(test);

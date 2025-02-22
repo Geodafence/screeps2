@@ -33,9 +33,11 @@ StructureSpawn.prototype.queueCheck = function() {
                 global.createdunit = 1
                 if(this.memory.queue[0].is == "claimer") {
                     if(this.memory.queue[0].baseMemory.check===1) {
-                        Memory.longrangemining[this.memory.queue[0].baseMemory.state].claimer = test
+                        let index = Memory.longrangemining.indexOf(Memory.longrangemining.filter((a)=>a.room===this.memory.queue[0].baseMemory.reserving)[0]
+                    )
+                        Memory.longrangemining[index].claimer = test
                     } else {
-                        Memory.claimers[String(Math.random())] = test
+                        Memory.claimers.push(test)
                     }
                 }
                 if(this.memory.queue[0].is == "LRB") {
@@ -55,12 +57,7 @@ StructureSpawn.prototype.queueCheck = function() {
                     Memory.trios[index].healerCreeps.push(test)
                 }
                 report.formatBasic(this.room.name,"a creep type: "+this.memory.queue[0].is+" was created with error log: "+errorreg)
-                delete this.memory.queue[0]
-                if(this.memory.queue[1] !== undefined) {
-                    this.memory.queue[0] = this.memory.queue[1]
-                } else {
-                    this.memory.queue = []
-                }
+                this.memory.queue.splice(0,1)
             }
         }
     }

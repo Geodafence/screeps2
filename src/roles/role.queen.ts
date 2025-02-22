@@ -69,7 +69,7 @@ function getMasterLink(masterSpawn:StructureSpawn) {
             }
         } else {
             var target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-                filter: (structure:AnyStoreStructure) => {
+                filter: (structure) => {
                     return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 }
@@ -80,7 +80,7 @@ function getMasterLink(masterSpawn:StructureSpawn) {
                 //@ts-ignore
                 report.formatBasic(creep.room.name,"emergancy rampart repair online for "+Game.getObjectById(creep.memory.spawnid).name)
                 var target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                    filter: (structure:AnyStoreStructure) => {
+                    filter: (structure) => {
                         return (structure.structureType == STRUCTURE_TOWER) &&
                             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                     }
@@ -89,7 +89,7 @@ function getMasterLink(masterSpawn:StructureSpawn) {
             if(target) {
             } else {
                 target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-                    filter: (structure:AnyStoreStructure) => {
+                    filter: (structure) => {
                         return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN ||
                             (structure.structureType == STRUCTURE_TOWER&&structure.store.getFreeCapacity(RESOURCE_ENERGY) > 500) ) &&
                             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
@@ -109,7 +109,7 @@ function getMasterLink(masterSpawn:StructureSpawn) {
                 return creep.owner.username !== "chungus3095"
             }});
             if(check.length > 0) {
-                target = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (structure:AnyStoreStructure) => {
+                target = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (structure) => {
                     return structure.structureType == STRUCTURE_TOWER&&structure.store.getFreeCapacity(RESOURCE_ENERGY) > 500;
                 }
             })

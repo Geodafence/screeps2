@@ -6,8 +6,8 @@ import { AnyStructure } from "../typings/structure";
      *
      * @param {Creep} creep
      */
-    export function run(creep:Creep) {
-        if(creep.store.getFreeCapacity() != 0 && creep.memory.state != "moving") {
+    export function run(creep:Creep,spawn:StructureSpawn) {
+        if(creep.memory.state != "moving") {
 	        //register.register("upgradersources",creep);
 
             //they use too much from the storages
@@ -16,6 +16,7 @@ import { AnyStructure } from "../typings/structure";
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_STORAGE && structure.store[RESOURCE_ENERGY] > 100000) ||
                     (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.controller!==undefined&&structure.room.controller.level<4)
+                    || (structure.structureType===STRUCTURE_CONTAINER&&structure.store[RESOURCE_ENERGY]>0)
                 }
         	});
             var targets2 = creep.room.find(FIND_DROPPED_RESOURCES, {
@@ -42,14 +43,18 @@ import { AnyStructure } from "../typings/structure";
 				// Harvest energy from the assigned source
 				harvest(creep);
 			}
+            if(creep.store.getFreeCapacity(RESOURCE_ENERGY)===0) {
+                creep.memory.state = "moving"
+            }
         } else {
 	       remove("upgradersources",creep);
            //@ts-ignore
-           creep.moveTo(creep.room.controller,{reusePath: 40,visualizePathStyle: {stroke: '#f46f02'}});
+           creep.moveTo(spawn.room.controller,{reusePath: 40,visualizePathStyle: {stroke: '#f46f02'}});
            //@ts-ignore
-            if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                creep.memory.state = "moving"
+            if(creep.upgradeController(spawn.room.controller) == ERR_NOT_IN_RANGE) {
             }
+            //@ts-ignore
+            else if(creep.room.controller?.sign?.username!==creep.owner.username) creep.signController(creep.room.controller,"01000111 01100101 01101111 00100000 01100010 01100001 01110011 01100101")
             if(creep.memory.state == "moving") {
                 if(creep.store[RESOURCE_ENERGY] == 0) {
                     creep.memory.state = 0

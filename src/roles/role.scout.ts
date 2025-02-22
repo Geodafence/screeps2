@@ -1,5 +1,5 @@
 import { Structure } from "../../typings/structure";
-
+import { report } from "../libs/roomReporting"
 
 
 export function tick(creep:Creep) {
@@ -58,9 +58,20 @@ export function tick(creep:Creep) {
             }
         }
     }
-    console.log(creep.moveTo(new RoomPosition(creep.memory.patrolling.x,creep.memory.patrolling.y,creep.memory.patrolling.roomName)))
+    creep.moveTo(new RoomPosition(creep.memory.patrolling.x,creep.memory.patrolling.y,creep.memory.patrolling.roomName))
     if(creep.pos.inRangeTo(creep.memory.patrolling,1)) {
-        Memory.scoutedRooms[creep.room.name] = createRoomData(creep)
+        let data = createRoomData(creep)
+        Memory.scoutedRooms[creep.room.name] = data
+        if(data.controller.reservation!==undefined&&data.controller.reservation!==creep.owner.username&&data.controller.owned===undefined&&data.controller.exists) {
+            if(Memory.harass===undefined) {
+                Memory.harass = []
+            }
+            if(data.controller.reservation!=="Invader") {
+                report.formatImportant("*","harass target found")
+                console.log("harass target found")
+                Memory.harass.push(creep.room.name)
+            }
+        }
         creep.memory.patrolling = undefined
 
     }
@@ -68,7 +79,7 @@ export function tick(creep:Creep) {
 }
 function createRoomData(creep:Creep) {
     let source = creep.room.find(FIND_SOURCES)
-    let creeps = creep.room.find(FIND_CREEPS)
+    let creeps = creep.room.find(FIND_HOSTILE_CREEPS)
     let structs:Structure[] = creep.room.find(FIND_STRUCTURES)
     let scout:scoutMemory = {
         sources: [],
@@ -82,9 +93,10 @@ function createRoomData(creep:Creep) {
         },
         surveyedAt: Game.time,
     }
-    for(let s of source) scout.sources.push(s.id)
+    for(let s of source) scout.sources.push(s.pos)
     for(let s of creeps) scout.creeps.push(s.pos)
     for(let s of structs) scout.Structures.push({pos:s.pos,structureType:s.structureType,id:s.id})
+    console.log(JSON.stringify(scout))
 
     return scout
 }

@@ -18,26 +18,66 @@ export function tick(creep: Creep) {
         if (creep.memory.state == "building") {
             if (creep.memory.room !== creep.room.name) {
                 let moveto = new RoomPosition(25, 25, creep.memory.room);
-                creep.moveTo(moveto, { reusePath: 40 });
+                creep.moveTo(moveto, {
+                    reusePath: 40,
+                    plainCost: 2,
+                    swampCost: 5,
+                    //@ts-ignore
+                    /*costCallback(roomName, costMatrix) {
+                        if(Memory.scoutedRooms[roomName].controller.owned!==undefined&&Memory.scoutedRooms[roomName].controller.owned!==creep.owner.username) {
+                            for(let y = 0; y < 50; y++) {
+                                for(let x = 0; x < 50; x++) {
+                                    costMatrix.set(x, y, 255);
+                                }
+                            }
+                            return costMatrix
+                        }
+                    }*/
+
+                })
             } else {
                 if (creep.store.getUsedCapacity() === 0) {
                     creep.memory.state = "moving";
                 }
+                if((creep.room.controller?.level??2)<2) {
+                    if(creep.room.controller) {
+                        creep.moveTo(creep.room.controller)
+                        creep.upgradeController(creep.room.controller)
+                    }
+                    return
+                }
                 let find: ConstructionSite[] = creep.room.find(FIND_CONSTRUCTION_SITES);
-                const targets = creep.room.find(FIND_STRUCTURES, {
-                    filter: (object: Structure) => object.hits < object.hitsMax * 0.50 && object.structureType !== STRUCTURE_WALL && object.structureType !== STRUCTURE_RAMPART
+                let targets:Structure[]|Structure|null = creep.room.find(FIND_STRUCTURES, {
+                    filter: (object: Structure) => object.hits < object.hitsMax * 0.50 && (object.structureType !== STRUCTURE_RAMPART||(object.structureType===STRUCTURE_RAMPART&&object.hits<3000))
+                    && (object.structureType !== STRUCTURE_WALL||(object.structureType===STRUCTURE_WALL&&object.hits<3000))
                 });
                 const targets2 = creep.room.find(FIND_STRUCTURES, {
-                    filter: (object: Structure) => object.hits < object.hitsMax * 0.30 && object.structureType !== STRUCTURE_WALL && object.structureType !== STRUCTURE_RAMPART
+                    filter: (object: Structure) => object.hits < object.hitsMax * 0.30 && (object.structureType !== STRUCTURE_RAMPART||(object.structureType===STRUCTURE_RAMPART&&object.hits<2000))
+                    && (object.structureType !== STRUCTURE_WALL||(object.structureType===STRUCTURE_WALL&&object.hits<2000))
                 });
-                if (find.length > 0 && targets2.length === 0) {
+                if (find.length > 0 && targets2.length === 0 && creep.memory.extratask!==1) {
                     find.sort((a: ConstructionSite, b: ConstructionSite) => Number((b.structureType === STRUCTURE_SPAWN)) - Number((a.structureType === STRUCTURE_SPAWN)))
                     if (creep.build(find[0]) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(find[0]);
                     }
-                } else if ((targets2.length > 0)) {
-                    if (creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
-                        creep.moveTo(targets[0]);
+                } else if ((targets2.length > 0)||creep.memory.extratask===1) {
+
+                    if(targets.length>0) {
+                        targets = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                            filter: (object: Structure) => object.hits < object.hitsMax * 0.50 && (object.structureType !== STRUCTURE_RAMPART||(object.structureType===STRUCTURE_RAMPART&&object.hits<3000))
+                            && (object.structureType !== STRUCTURE_WALL||(object.structureType===STRUCTURE_WALL&&object.hits<3000))
+                        });
+                        //@ts-ignore
+                        if(targets&&targets.length===undefined) {
+                            creep.memory.extratask = 1
+                            //@ts-ignore
+                            if (creep.repair(targets) == ERR_NOT_IN_RANGE) {
+                                //@ts-ignore
+                                creep.moveTo(targets);
+                            }
+                        }
+                    } else {
+                        creep.memory.extratask = 0
                     }
                 } else {
                     if (creep.room.controller !== undefined) {

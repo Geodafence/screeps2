@@ -1,3 +1,4 @@
+import { Structure, StructureContainer, StructureStorage } from "../../typings/structure";
 
 
 /**
@@ -23,8 +24,8 @@ export function run(creep:Creep) {
         if(creep.store.getFreeCapacity(RESOURCE_ENERGY)===0) creep.memory.state="refilling"
     }
     if(creep.memory.state==="refilling"&&creep.room.controller!==undefined) {
-        let targets = creep.room.controller.pos.findInRange(FIND_MY_CREEPS,5,{filter:(a:Creep)=>a.store.getFreeCapacity(RESOURCE_ENERGY)>0&&a.getActiveBodyparts(WORK)>0})
-        .sort((a:Creep,b:Creep)=>a.store[RESOURCE_ENERGY]-b.store[RESOURCE_ENERGY])
+        let targets:StructureContainer[] = creep.room.controller.pos.findInRange(FIND_STRUCTURES,5,{filter:(a)=>a.structureType===STRUCTURE_CONTAINER})
+        //.sort((a:Creep,b:Creep)=>a.store[RESOURCE_ENERGY]-b.store[RESOURCE_ENERGY])
         if(targets.length>0)
             if(creep.transfer(targets[0],RESOURCE_ENERGY)===ERR_NOT_IN_RANGE)
                 creep.moveTo(targets[0])

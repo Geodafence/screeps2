@@ -57,4 +57,28 @@ import { Structure } from "../../typings/structure";
                 }
             }
          }
+         if (
+            creep.room.find(FIND_HOSTILE_CREEPS, {
+                filter: function (creep:Creep) {
+                    return creep.owner.username !== "chungus3095"
+                }
+            }).length > 0 &&
+            creep.room.find(FIND_MY_CREEPS, {
+                filter: function (creep:Creep) {
+                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                }
+            }).length === 0
+        ) {
+            let alreadyrequested = -1;
+            for (let temp in Memory.defenserequests) {
+                if (Memory.defenserequests[temp].room == creep.room.name) {
+                    alreadyrequested = 1;
+                }
+            }
+            if (alreadyrequested == -1) {
+                Memory.defenserequests.push({ x: creep.pos.x, y: creep.pos.y, room: creep.room.name });
+            }
+            global.defenseNeeded = 40;
+            return;
+        }
     }

@@ -1,45 +1,100 @@
 import { Id } from "../../typings/helpers";
 import { Structure } from "../../typings/structure";
 import { getTrueDistance } from "../libs/general.functions";
+import { report } from "../libs/roomReporting"
 export function tick(trio:trioMemory):trioMemory|null {
 
     if(trio.state==="moving") {
-        trio = healAttacker(trio)
-        if(getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos,Game.creeps[trio.mainCreep].pos)>3) {
-            Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[0]])
-            return trio
+        if(Game.creeps[trio.mainCreep]===undefined) {
+            return null
         }
+        if(trio.isSkrimisher) {
+            trio = healAttacker(trio)
 
-        if(getTrueDistance(Game.creeps[trio.healerCreeps[1]].pos,Game.creeps[trio.mainCreep].pos)>3) {
-            Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[1]])
-            return trio
-        }
-        let attacker:Creep = Game.creeps[trio.mainCreep]
-        attacker.moveTo(new RoomPosition(25,25,trio.room),{reusePath:20})
-        if(attacker.room.name===trio.room) {
-            trio.plan  = createPlan(attacker,[STRUCTURE_TOWER,STRUCTURE_SPAWN,STRUCTURE_STORAGE,STRUCTURE_EXTENSION])
-            trio.state = "attacking"
+            if(getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos,Game.creeps[trio.mainCreep].pos)>2&&Game.creeps[trio.healerCreeps[0]].room.name===Game.creeps[trio.mainCreep].room.name) {
+                //Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[0]])
+                return trio
+            }
+            if(attackCreeps(trio)) {
+                report.formatBasic("*","test")
+                return trio
+            }
+            let attacker:Creep = Game.creeps[trio.mainCreep]
+            attacker.moveTo(new RoomPosition(25,25,trio.room),{reusePath:20})
+            if(attacker.room.name===trio.room) {
+                trio.state = "attacking"
+            }
+            if(!Game.creeps[trio.mainCreep]) {
+                trio.state = "retreating"
+            }
+        } else {
+            trio = healAttacker(trio)
+
+            if(getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos,Game.creeps[trio.mainCreep].pos)>2&&Game.creeps[trio.healerCreeps[0]].room.name===Game.creeps[trio.mainCreep].room.name) {
+                //Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[0]])
+                return trio
+            }
+            if(attackCreeps(trio)) {
+                report.formatBasic("*","test")
+                return trio
+            }
+            let attacker:Creep = Game.creeps[trio.mainCreep]
+            attacker.moveTo(new RoomPosition(25,25,trio.room),{reusePath:20})
+            if(attacker.room.name===trio.room) {
+                trio.plan  = createPlan(attacker,[STRUCTURE_TOWER,STRUCTURE_SPAWN,STRUCTURE_STORAGE,STRUCTURE_EXTENSION])
+                trio.state = "attacking"
+            }
+            if(!Game.creeps[trio.mainCreep]) {
+                trio.state = "retreating"
+            }
         }
     }
     if(trio.state==="attacking") {
-        trio = healAttacker(trio)
-        if(getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos,Game.creeps[trio.mainCreep].pos)>3) {
-            Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[0]])
-            return trio
-        }
-        if(getTrueDistance(Game.creeps[trio.healerCreeps[1]].pos,Game.creeps[trio.mainCreep].pos)>3) {
-            Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[1]])
-            return trio
-        }
-        if(trio.plan.length>0) {
-            trio = attackPlanned(trio)
-        } else {
-            Game.creeps[trio.mainCreep].suicide();
-            for(let h of trio.healerCreeps) {
-                let healer:Creep = Game.creeps[h];
-                healer.suicide();
-            }
+        if(Game.creeps[trio.mainCreep]===undefined) {
             return null
+        }
+        if(trio.isSkrimisher) {
+            trio = healAttacker(trio)
+
+            if(getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos,Game.creeps[trio.mainCreep].pos)>2&&Game.creeps[trio.healerCreeps[0]].room.name===Game.creeps[trio.mainCreep].room.name) {
+                //Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[0]])
+                return trio
+            }
+            if(attackCreeps(trio,50)) {
+                report.formatBasic("*","test")
+                return trio
+            }
+            let attacker:Creep = Game.creeps[trio.mainCreep]
+            attacker.moveTo(new RoomPosition(25,25,trio.room),{reusePath:20})
+            if(attacker.room.name===trio.room) {
+                trio.state = "attacking"
+            }
+            if(!Game.creeps[trio.mainCreep]) {
+                trio.state = "retreating"
+            }
+        } else {
+            trio = healAttacker(trio)
+
+            if(getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos,Game.creeps[trio.mainCreep].pos)>2&&Game.creeps[trio.healerCreeps[0]].room.name===Game.creeps[trio.mainCreep].room.name) {
+                //Game.creeps[trio.mainCreep].moveTo(Game.creeps[trio.healerCreeps[0]])
+                return trio
+            }
+            if(attackCreeps(trio)) {
+                return trio
+            }
+            if(trio.plan.length>0) {
+                trio = attackPlanned(trio)
+            } else {
+                //Game.creeps[trio.mainCreep].suicide();
+                for(let h of trio.healerCreeps) {
+                    let healer:Creep = Game.creeps[h];
+                    //healer.suicide();
+                }
+                return null
+            }
+            if(!Game.creeps[trio.mainCreep]) {
+                trio.state = "retreating"
+            }
         }
     }
     if(trio.state==="creating") {
@@ -50,25 +105,21 @@ export function tick(trio:trioMemory):trioMemory|null {
                 continue
             }
         }
-        if(Game.creeps[trio.mainCreep]&&trio.healerCreeps.length>=2) {
+        if(Game.creeps[trio.mainCreep]&&trio.healerCreeps.length>=1) {
             trio.state = "moving"
         }
 
     }
     if(trio.state==="retreating") {
-        if(Game.creeps[trio.mainCreep]&&trio.healerCreeps.length>=2) {
-            trio.state = "moving"
-        }
+        return null
+    }
 
-    }
-    if(!Game.creeps[trio.mainCreep]) {
-        trio.state = "retreating"
-    }
     return trio
 }
 
 function healAttacker(trio:trioMemory):trioMemory {
     let attacker:Creep = Game.creeps[trio.mainCreep]
+
     for(let h of trio.healerCreeps) {
         let healer:Creep = Game.creeps[h];
         if(!healer) {
@@ -92,17 +143,26 @@ function healAttacker(trio:trioMemory):trioMemory {
     }
     return trio
 }
+function attackCreeps(trio:trioMemory,range:number=5):boolean {
+    let attacker:Creep = Game.creeps[trio.mainCreep]
+    if(trio.mainCreepType==="attack") {
+        let enemyCreeps = attacker.pos.findInRange(FIND_HOSTILE_CREEPS,range,{filter:(a)=>a.getActiveBodyparts(ATTACK)>0||a.getActiveBodyparts(RANGED_ATTACK)>0||a.getActiveBodyparts(HEAL)>0})
 
+        if(enemyCreeps.length>0) {
+            let path = attacker.room.findPath(attacker.pos,enemyCreeps[0].pos)
+            if(path[path.length-1].x===enemyCreeps[0].pos.x&&path[path.length-1].y===enemyCreeps[0].pos.y) {
+                if(attacker.attack(enemyCreeps[0])) {
+                    attacker.moveTo(enemyCreeps[0])
+                }
+                return true
+            }
+        }
+    }
+    return false
+}
 function attackPlanned(trio:trioMemory):trioMemory {
     let attacker:Creep = Game.creeps[trio.mainCreep]
     if(trio.mainCreepType==="attack") {
-        let enemyCreeps = attacker.pos.findInRange(FIND_HOSTILE_CREEPS,3,{filter:(a)=>a.getActiveBodyparts(ATTACK)>0||a.getActiveBodyparts(RANGED_ATTACK)>0||a.getActiveBodyparts(HEAL)>0})
-        if(enemyCreeps.length>0) {
-            if(attacker.attack(enemyCreeps[0])) {
-                attacker.moveTo(enemyCreeps[0])
-            }
-            return trio
-        }
         let struct:Structure = Game.getObjectById(trio.plan[0])
         if(struct) {
             if(attacker.attack(struct)!==OK) {
@@ -165,6 +225,7 @@ export function createPlan(start:Creep,importantStructures:StructureConstant[]):
                 const look = start.room.lookAt(item.x,item.y);
                 look.forEach(function(lookObject) {
                     if(lookObject.type == LOOK_STRUCTURES &&
+                            //@ts-ignore
                     (lookObject[LOOK_STRUCTURES].structureType===STRUCTURE_WALL||lookObject[LOOK_STRUCTURES].structureType===STRUCTURE_RAMPART)) {
                         attack.push(lookObject.structure.id)
                         destroyed.push({x:lookObject.structure.pos.x,y:lookObject.structure.pos.y})

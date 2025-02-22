@@ -6,10 +6,10 @@ import { ConstructionSite } from "../typings/construction-site";
 
 
     /** @param {Creep} creep **/
-    export function run(creep:Creep) {
+    export function run(creep:Creep,spawn:StructureSpawn) {
         // Array of possible extra tasks when there are no construction sites
         let rand = ["upgrading"];
-        if(creep.room.controller!==undefined&&creep.room.controller.level < 3) {
+        if(spawn.room.controller!==undefined&&spawn.room.controller.level < 3) {
             rand = ["upgrading","repairing"];
         }
         // Switch to harvesting mode if the creep is building and runs out of energy
@@ -29,12 +29,12 @@ import { ConstructionSite } from "../typings/construction-site";
         // If the creep is in building mode
         if(creep.memory.state) {
             // Find construction sites in the room
-            var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+            let targets = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES);
             let emergancyrepair = creep.room.find(FIND_STRUCTURES,{filter: (struct: Structure) => struct.hits < struct.hitsMax*0.25&&struct.structureType!==STRUCTURE_RAMPART&&struct.structureType!==STRUCTURE_WALL})
             // If construction sites are available, build at the nearest site
-            if(targets.length&&emergancyrepair.length===0) {
-                if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets[0], {reusePath: 40, visualizePathStyle: {stroke: '#8f02f4'}});
+            if(targets&&emergancyrepair.length===0) {
+                if(creep.build(targets) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(targets, {reusePath: 40, visualizePathStyle: {stroke: '#8f02f4'}});
                 }
             } else {
                 if(emergancyrepair.length>0) {
@@ -62,19 +62,20 @@ import { ConstructionSite } from "../typings/construction-site";
                 } else {
                     // If the extra task is upgrading, move to and upgrade the room controller
                     //@ts-ignore
-                    creep.moveTo(creep.room.controller, {reusePath: 40, visualizePathStyle: {stroke: '#f46f02'}});
+                    creep.moveTo(spawn.room.controller, {reusePath: 40, visualizePathStyle: {stroke: '#f46f02'}});
                     //@ts-ignore
-                    if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
+                    if(creep.upgradeController(spawn.room.controller) == ERR_NOT_IN_RANGE) {
                     }
                 }
             }
         } else {
             // no clue why this is erroring
             //@ts-ignore
-			var targets = creep.room.find(FIND_STRUCTURES, {
+			let targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_STORAGE && structure.store[RESOURCE_ENERGY] > 100000) ||
                     (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.storage===undefined)
+                    || (structure.structureType===STRUCTURE_CONTAINER&&structure.store[RESOURCE_ENERGY]>0)
                 }
         	});
 			if(targets.length > 0) {
