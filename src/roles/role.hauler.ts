@@ -62,7 +62,7 @@ export function locateMinerCreeps(creep:Creep) {
  * @param {Creep} creep
  * @returns
  */
-export function tick(creep:Creep, focuson:any) {
+export function tick(creep:Creep) {
     try {
         if (creep.store[RESOURCE_ENERGY] == 0) {
             creep.memory.moving = false;

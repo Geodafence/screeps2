@@ -47,21 +47,20 @@ if ("harvesters" in Memory != true) {
     Memory.usedsources = new Array();
     Memory.buildersources = new Array();
     Memory.upgradersources = new Array();
+    Memory.harass = new Array();
     Memory.wantToClaim = new Array();
     Memory.roomCache = new Object();
     Memory.builderlevel = 1;
 }
 if ("storedcreeps" in Memory != true) {
     // Initialization of memory properties for stored creeps and mining
+    /*
     console.log("loading long range miners!");
-    // @ts-ignore
     Memory.storedcreeps = new Array();
-    // @ts-ignore
     Memory.segmentRequests = new Array();
-    // @ts-ignore
     Memory.longrangemining = new Array();
-    // @ts-ignore
     Memory.longrangeminingcreeps = new Array();
+    */
 }
 
 // Setup mining rooms and global update lists.
@@ -86,7 +85,6 @@ global.methods = {}
 global.methods["createqueen"] = createqueen
 global.methods["createhauler"] = createhauler
 global.defenseNeeded = 0
-global.timer = 0
 global.updatecache = 100
 
 console.log("restarting loop");
@@ -106,13 +104,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
     global.updatecache += 1
     RawMemory.setActiveSegments([1]);
     Memory.haulerlevel = 0
-    global.timer += 1
     global.fixticks += 1
     if (global.defenseNeeded >= 20) {
         report.formatImportant("*", "defense required")
     }
     //Gather info on which spawn for haulers to focus on
-    global.haulerfocus = 0
     let grab = 0
     let info = 1000000000000
     let keyfix = Game.spawns
@@ -167,7 +163,6 @@ export const loop = ErrorMapper.wrapLoop(() => {
         }
         global.miningroomsReset = Memory.miningrooms
         let replace = []
-        global.haulerfocus = currentspawn.name
         for (let R of Memory.miningrooms) {
             if(room.name==="E8S34") {
                 if((room.isNearby(R.room)&&R.room!=="E7S33")&&(R.linkedroom===room.name||R.linkedroom===undefined)) replace.push(R)
@@ -358,7 +353,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     (spawn.room.getMasterSpawn().memory.queen === undefined && spawn.room.getMasterSpawn().memory.queen2 === undefined && spawn.room.controller.level > 3)) {
                     try {
                         console.log(room.name,"trying to spawn")
-                        if ((spawn.room.getMasterSpawn().memory.queen === undefined && spawn.room.getMasterSpawn().memory.queen2 === undefined && spawn.room.controller.level > 3) || global.restartEco !== undefined) {
+                        if ((spawn.room.getMasterSpawn().memory.queen === undefined && spawn.room.getMasterSpawn().memory.queen2 === undefined && spawn.room.controller.level > 3)) {
 
                             newharvcheck(spawn.name);
                             newbuildcheck(spawn.name);
@@ -555,7 +550,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
         if (Memory.haulers.length > 0) {
-            Memory.haulers.forEach(item => haulerforeach(item, global.haulerfocus));
+            Memory.haulers.forEach(item => haulerforeach(item));
         }
         // Run the miner code for long-range mining logic
         remotetick();
@@ -686,9 +681,6 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
     // Log CPU usage with different warnings based on usage level
     let ecolevel = 3
-    if (global.restartEco !== undefined) {
-        ecolevel = 2
-    }
     if (Memory.haulers.length < 4) {
         ecolevel = 1
     }
@@ -758,11 +750,11 @@ function harvesterforeach(item: string, spawntype: string) {
 }
 
 // Function to handle tasks for each hauler
-function haulerforeach(item: string, focuson: any) {
+function haulerforeach(item: string) {
     if (item in Game.creeps) {
         // Renew hauler if it's near the end of its lifespan
         // Execute hauler tasks
-        haulertick(Game.creeps[item], focuson);
+        haulertick(Game.creeps[item]);
     } else {
         // Remove harvester from memory if it no longer exists
         const index = Memory.haulers.indexOf(item);

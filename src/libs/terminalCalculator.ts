@@ -64,9 +64,6 @@ import { removerequests, sendrequest } from "./item-request-lib";
      * @param {StructureTerminal} building
      */
     export function tick(building:StructureTerminal) {
-        if(global.restartEco!==undefined) {
-            return
-        }
         if(Memory.structures===undefined) {
             Memory.structures = {}
         }

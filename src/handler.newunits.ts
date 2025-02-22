@@ -257,7 +257,7 @@ export function newharvcheck(spawnname: string) {
         buildercost = global.cache[spawnname + "Ucache" + type].cost
     }
     //@ts-ignore
-    if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1 || Memory.haulers.length < 2 || global.restartEco !== undefined)) {
+    if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1 || Memory.haulers.length < 2)) {
         allstores = 0
         allstorescheck = allstores
     }
@@ -521,12 +521,6 @@ export function newhaulercheck(spawnname: string) {
                 return
             }
         }
-    }
-    //@ts-ignore
-    if ((Math.ceil((Memory.haulerneeded + (allmodules.length / 2)) / (allmodules.length / 2) / 3)) >= Memory.haulers.length && (Game.spawns[spawnname].room.controller && Game.spawns[spawnname].room.controller.level >= 4)) {
-        global.restartEco = Game.spawns[spawnname]
-    } else {
-        global.restartEco = undefined
     }
 
     Memory.haulerlevel = allstores
