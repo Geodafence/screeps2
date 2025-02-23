@@ -417,7 +417,7 @@ export function newbuildcheck(spawnname: string) {
     //@ts-ignore
     let buildNeedBool = Game.spawns[spawnname].room.controller.level < 4 ? checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length :
         (checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0) && mSpawn.memory.queen !== undefined && mSpawn.memory.queen2 !== undefined
-    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && (true || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
+    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && (Memory.haulers.length>=Memory.haulerSatisfied || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
         if (buildNeedBool) {
             if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length) || (Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
                 if (Game.spawns[spawnname].spawning == null) {
@@ -581,7 +581,7 @@ export function newhaulercheck(spawnname: string) {
 export function newcombatcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
     console.log(Game.spawns[spawnname].room.name, "test")
-    if ((global.createdunit == 1 || (global.defenseNeeded < 20 && Memory.harass.length === 0)) && Game.flags.attack === undefined) {
+    if ((global.createdunit == 1 || (global.defenseNeeded < 20 && (Memory.harass.length === 0||Memory.haulers.length>=Memory.haulerSatisfied))) && Game.flags.attack === undefined) {
         return
     }
     var allstores = Memory.storecache
