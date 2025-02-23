@@ -252,7 +252,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
             for(const t in target2) {
                 let I = target2[t]
                 if(I.structureType == STRUCTURE_TOWER&&creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(crep) {
-                    return (crep.getActiveBodyparts(ATTACK) > 0|| crep.getActiveBodyparts(RANGED_ATTACK) > 0) && Allies.indexOf(creep.owner.username) === -1;
+                    return (crep.getActiveBodyparts(ATTACK) > 0|| crep.getActiveBodyparts(RANGED_ATTACK) > 0) && Allies.indexOf(crep.owner.username) === -1;
                 }}).length==0) {
                     target1 = null
                     target2 = [I]

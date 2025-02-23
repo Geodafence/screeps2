@@ -1,3 +1,4 @@
+import { Allies } from "../allyLibs/allyConsts"
 export interface combatConstructor {
     /** The estimated total power of the item, may be inaccurate depending on the situation */
     estimatedPower: number;
@@ -25,7 +26,7 @@ interface reportConstructor {
      * @param room The room to check
      * @returns a {@link Boolean} confirming if those creeps can win or not.
      */
-    canWinRoom: (room:Room) => Boolean
+    canWinRoom: (room: Room) => Boolean
     /**
      * Gets the power of a creep
      * @param creep A creep
@@ -70,7 +71,7 @@ export class strengthCalc implements reportConstructor {
         } else {
             thisPower = global.cache[thiscacheId]
         }
-        if(thisPower.estimatedPower>=enemyPower.estimatedPower) {
+        if (thisPower.estimatedPower >= enemyPower.estimatedPower) {
             return true
         } else {
             return false
@@ -81,11 +82,11 @@ export class strengthCalc implements reportConstructor {
      * @param room The room to check
      * @returns a {@link Boolean} confirming if those creeps can win or not.
      */
-    canWinRoom(room:Room): Boolean {
+    canWinRoom(room: Room): Boolean {
         let thisPower: combatConstructor = this.getMyRoomPower(room)
         let enemyPower: combatConstructor = this.getEnemyRoomPower(room)
-        console.log("this rooms power: "+JSON.stringify(thisPower)+", enemy room power: "+JSON.stringify(enemyPower))
-        if(thisPower.estimatedPower>=enemyPower.estimatedPower) {
+        console.log("this rooms power: " + JSON.stringify(thisPower) + ", enemy room power: " + JSON.stringify(enemyPower))
+        if (thisPower.estimatedPower >= enemyPower.estimatedPower) {
             return true
         } else {
             return false
@@ -104,7 +105,7 @@ export class strengthCalc implements reportConstructor {
             rangedPower: 0,
             healingPower: 0
         }
-        constructor.meleePower = (creep.getActiveBodyparts(ATTACK) * ATTACK_POWER)/3
+        constructor.meleePower = (creep.getActiveBodyparts(ATTACK) * ATTACK_POWER) / 3
         constructor.rangedPower = creep.getActiveBodyparts(RANGED_ATTACK) * RANGED_ATTACK_POWER
         constructor.healingPower = creep.getActiveBodyparts(HEAL) * HEAL_POWER
 
@@ -134,7 +135,7 @@ export class strengthCalc implements reportConstructor {
      * @param room The room to search
      * @returns A {@link combatConstructor} giving the room's power
      */
-    getEnemyRoomPower(room: Room):combatConstructor {
+    getEnemyRoomPower(room: Room): combatConstructor {
         let totalPower: combatConstructor = {
             estimatedPower: 0,
             HPpower: 0,
@@ -143,10 +144,14 @@ export class strengthCalc implements reportConstructor {
             healingPower: 0
         }
 
-        let creeps = room.find(FIND_HOSTILE_CREEPS)
+        let creeps = room.find(FIND_HOSTILE_CREEPS, {
+            filter: function (creep: Creep) {
+                return Allies.indexOf(creep.owner.username) === -1
+            }
+        })
 
-        for(let creep of creeps) {
-            totalPower = combineCombatPower(totalPower,this.getCreepPower(creep))
+        for (let creep of creeps) {
+            totalPower = combineCombatPower(totalPower, this.getCreepPower(creep))
         }
 
         return totalPower
@@ -156,7 +161,7 @@ export class strengthCalc implements reportConstructor {
      * @param room The room to search
      * @returns A {@link combatConstructor} giving the room's power
      */
-    getMyRoomPower(room: Room):combatConstructor {
+    getMyRoomPower(room: Room): combatConstructor {
         let totalPower: combatConstructor = {
             estimatedPower: 0,
             HPpower: 0,
@@ -167,14 +172,14 @@ export class strengthCalc implements reportConstructor {
 
         let creeps = room.find(FIND_MY_CREEPS)
 
-        for(let creep of creeps) {
-            totalPower = combineCombatPower(totalPower,this.getCreepPower(creep))
+        for (let creep of creeps) {
+            totalPower = combineCombatPower(totalPower, this.getCreepPower(creep))
         }
 
         return totalPower
     }
 }
-function combineCombatPower(constructor1:combatConstructor,constructor2:combatConstructor):combatConstructor {
+function combineCombatPower(constructor1: combatConstructor, constructor2: combatConstructor): combatConstructor {
     let constructor: combatConstructor = {
         estimatedPower: 0,
         HPpower: 0,
@@ -183,11 +188,11 @@ function combineCombatPower(constructor1:combatConstructor,constructor2:combatCo
         healingPower: 0
     }
 
-    let repeat = ["estimatedPower","HPpower","meleePower","rangedPower","healingPower"]
+    let repeat = ["estimatedPower", "HPpower", "meleePower", "rangedPower", "healingPower"]
 
-    for(let compare of repeat) {
+    for (let compare of repeat) {
         //@ts-ignore
-        constructor[compare] = constructor1[compare]+constructor2[compare]
+        constructor[compare] = constructor1[compare] + constructor2[compare]
     }
 
     return constructor
