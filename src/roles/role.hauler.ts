@@ -97,7 +97,7 @@ export function tick(creep:Creep) {
         if (
             creep.pos.findInRange(FIND_HOSTILE_CREEPS, 5, {
                 filter: function (creep:Creep) {
-                    return Allies.indexOf(creep.owner.username) !== -1 &&
+                    return Allies.indexOf(creep.owner.username) === -1 &&
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             }).length > 0 &&
@@ -109,7 +109,7 @@ export function tick(creep:Creep) {
         ) {
             let goals:Creep|null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,  {
                 filter: function (creep:Creep) {
-                    return Allies.indexOf(creep.owner.username) !== -1 &&
+                    return Allies.indexOf(creep.owner.username) === -1 &&
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             })
@@ -264,7 +264,7 @@ export function tick(creep:Creep) {
             //@ts-ignore
             let check = Game.getObjectById(creep.memory.spawnid).room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep:Creep) {
-                    return Allies.indexOf(creep.owner.username) !== -1 &&
+                    return Allies.indexOf(creep.owner.username) === -1 &&
                     (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
                 }
             });

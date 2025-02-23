@@ -86,7 +86,7 @@ global.methods = {}
 global.methods["createqueen"] = createqueen
 global.methods["createhauler"] = createhauler
 global.defenseNeeded = 0
-global.updatecache = 100
+global.updatecache = 100;
 
 console.log("restarting loop");
 //var ramparttest = require("rampartcalc")
@@ -263,19 +263,19 @@ export const loop = ErrorMapper.wrapLoop(() => {
             let tower: StructureTower = towers[towerold]
             let attackers: Creep[] = tower.room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep: Creep) {
-                    return Allies.indexOf(creep.owner.username) !== -1
+                    return Allies.indexOf(creep.owner.username) === -1
                 }
             }).sort((a: Creep, b: Creep) => a.hits - b.hits)
             if (attackers.length > 0) {
                 let healers = tower.room.find(FIND_HOSTILE_CREEPS, {
                     filter: function (creep: Creep) {
-                        return Allies.indexOf(creep.owner.username) !== -1 && creep.getActiveBodyparts(HEAL) > 0
+                        return Allies.indexOf(creep.owner.username) === -1 && creep.getActiveBodyparts(HEAL) > 0
                     }
                 })
                 if (towerdata.attackedhealer === 1) {
                     attackers = tower.room.find(FIND_HOSTILE_CREEPS, {
                         filter: function (creep: Creep) {
-                            return Allies.indexOf(creep.owner.username) !== -1
+                            return Allies.indexOf(creep.owner.username) === -1
                         }
                     }).sort((a: Creep, b: Creep) => a.getActiveBodyparts(HEAL) - b.getActiveBodyparts(HEAL))
                 }

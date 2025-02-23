@@ -4,9 +4,11 @@ export function findSuitableRemotes(room: Room):{room: string;linkedroom?: strin
     let coords = ["W0N1","E1N1","E1N0","E1S1","E0S1","W1S1","W1N0"]
     let mid = new RoomPosition(25,25,room.name)
     let foundSources = 0
+    let level = (room.controller?.level??0)
+    let neededSources = level>=7?8:level>=3?4:6
     let possibleRooms:string[] = []
     for(let coord of coords) {
-        if(foundSources>=6) break;
+        if(foundSources>=neededSources) break;
         let roomCheck = addCoordinates(room.name,coord)
         let Sroom = Memory.scoutedRooms[roomCheck]
         if(Sroom!==undefined) {

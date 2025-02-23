@@ -43,7 +43,7 @@ import { Allies } from "../libs/allyLibs/allyConsts"
             }
             targets.sort((a:Structure, b:Structure) => Number((a.structureType == STRUCTURE_STORAGE || a.structureType == STRUCTURE_TOWER)) - Number((b.structureType == STRUCTURE_STORAGE || b.structureType == STRUCTURE_TOWER)));
             if(creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep) {
-                return Allies.indexOf(creep.owner.username) !== -1
+                return Allies.indexOf(creep.owner.username) === -1
             }}).length > 0) {
                 let set = creep.room.find(FIND_MY_STRUCTURES, {filter: function(struct) {
                     return struct.structureType == STRUCTURE_TOWER
@@ -61,7 +61,7 @@ import { Allies } from "../libs/allyLibs/allyConsts"
          if (
             creep.room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep:Creep) {
-                    return Allies.indexOf(creep.owner.username) !== -1
+                    return Allies.indexOf(creep.owner.username) === -1
                 }
             }).length > 0 &&
             creep.room.find(FIND_MY_CREEPS, {

@@ -107,7 +107,7 @@ function getMasterLink(masterSpawn:StructureSpawn) {
 
             }
             let check = creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep) {
-                return Allies.indexOf(creep.owner.username) !== -1
+                return Allies.indexOf(creep.owner.username) === -1
             }});
             if(check.length > 0) {
                 target = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (structure) => {

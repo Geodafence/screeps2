@@ -44,22 +44,33 @@ export function tick() {
             Memory.longrangemining[temp] = info;
         }
         if (info.room === undefined&&RoomObject!==undefined) {
-            Memory.longrangemining[temp].room = RoomObject.room
+            for(let R of Memory.miningrooms) {
+                if(Memory.longrangemining.some((a)=>a.room===R.room)===false) {
+                    Memory.longrangemining[temp].room = R.room
+                }
+            }
         } else {
             for (let object of Memory.miningrooms) {
-                if (object.room === Memory.longrangemining[temp].room) {
+                if (object.room === Memory.longrangemining[temp].room&&Memory.longrangemining.some((a)=>a.room==object.room)===false) {
                     RoomObject = object
                     break
                 }
             }
         }
-        if(Memory.miningrooms.some((a)=>a.room===Memory.longrangemining[temp].room)===false) {
-            Memory.longrangemining.splice(temp,1)
-            break;
+        if(Memory.longrangemining[temp].room!==undefined) {
+            if(Memory.miningrooms.some((a)=>a.room===Memory.longrangemining[temp].room)===false) {
+                Memory.longrangemining.splice(temp,1)
+                console.log("A")
+                break;
+            }
         }
-        if(Memory.miningrooms.filter((a)=>a.room===Memory.longrangemining[temp].room).length>1) {
-            Memory.longrangemining.splice(temp,1)
-            break;
+        let filter = Memory.longrangemining.filter((a)=>a.room===Memory.longrangemining[temp].room)
+        if(filter.length>1) {
+            if(Memory.longrangemining.lastIndexOf(filter[filter.length-1])>=temp) {
+                temp -= 1
+            }
+            Memory.longrangemining.splice(Memory.longrangemining.lastIndexOf(filter[filter.length-1]),1)
+            console.log("B")
         }
         // If no creeps are currently wanted for mining, check if there's a creep available to send
         if (Memory.longrangemining[temp].wantcreeps == 0) {
@@ -151,7 +162,7 @@ export function tick() {
                 let hostiles: Creep[] | Structure[]
                 hostiles = creep.room.find(FIND_HOSTILE_CREEPS, {
                     filter: function (creep:Creep) {
-                        return Allies.indexOf(creep.owner.username) !== -1 &&
+                        return Allies.indexOf(creep.owner.username) === -1 &&
                         (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL)||creep.getActiveBodyparts(CLAIM))
                     }
                 })
