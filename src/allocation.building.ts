@@ -74,7 +74,7 @@ import { ConstructionSite } from "../typings/construction-site";
 			let targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_STORAGE && structure.store[RESOURCE_ENERGY] > 100000) ||
-                    (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.storage===undefined)
+                    (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.storage===undefined&&Memory.longrangemining[Memory.longrangemining.length-1].creeps.length>0)
                     || (structure.structureType===STRUCTURE_CONTAINER&&structure.store[RESOURCE_ENERGY]>0)
                 }
         	});

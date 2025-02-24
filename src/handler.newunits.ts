@@ -215,11 +215,11 @@ export function newharvcheck(spawnname: string) {
         buildercost = global.cache[spawnname + "Ucache" + type].cost
     }
     if (Memory.storedcreeps.length == 0) {
-        //report.formatBasic("debug","1")
+        report.formatBasic("debug","1")
         if (Game.spawns[spawnname].room.energyAvailable >= buildercost) {
-            //report.formatBasic("debug","2")
+            report.formatBasic("debug","2")
             if (Game.spawns[spawnname].spawning === null && Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade >= 1) {
-                //report.formatBasic("debug","3")
+                report.formatBasic("debug","3")
                 createminer(allmodules, spawnname)
                 return
             }
@@ -415,11 +415,14 @@ export function newbuildcheck(spawnname: string) {
     Memory.builderlevel = allstores
     let mSpawn: StructureSpawn = Game.spawns[spawnname].room.getMasterSpawn()
     //@ts-ignore
-    let buildNeedBool = Game.spawns[spawnname].room.controller.level < 4 ? checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length :
-        (checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0) && mSpawn.memory.queen !== undefined && mSpawn.memory.queen2 !== undefined
-    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && (Memory.haulers.length>=Memory.haulerSatisfied || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
+    let buildNeedBool = checkbuildwant(spawnname) >= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length
+    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && (Memory.longrangemining[Memory.longrangemining.length-1].creeps.length!==0 || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
+        report.formatBasic("debug","build1")
         if (buildNeedBool) {
-            if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length) || (Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
+            report.formatBasic("debug","build2")
+            if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)
+                 || (Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
+                report.formatBasic("debug","build3")
                 if (Game.spawns[spawnname].spawning == null) {
                     createbuild(spawnname, allmodules)
                     return
@@ -580,7 +583,6 @@ export function newhaulercheck(spawnname: string) {
 }
 export function newcombatcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    console.log(Game.spawns[spawnname].room.name, "test")
     if ((global.createdunit == 1 || (global.defenseNeeded < 20 && (Memory.harass.length === 0||Memory.haulers.length>=Memory.haulerSatisfied))) && Game.flags.attack === undefined) {
         return
     }
@@ -629,7 +631,7 @@ export function newcombatcheck(spawnname: string) {
         bool = spawn.room.storage.store[RESOURCE_ENERGY] > 100000 || global.defenseNeeded >= 20
     }
     console.log(Game.spawns[spawnname].room.name, "Combat check")
-    if ((Game.spawns[spawnname].room.energyAvailable >= buildercost && global.createdunit !== 1) && (bool)) {
+    if ((Game.spawns[spawnname].room.energyAvailable >= buildercost && global.createdunit !== 1) && bool && (Game.spawns[spawnname].room.controller??{level:0}).level>=5) {
         if ((Memory.fighters.length < 4) || Memory.harass.length > 0) {
             if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)) {
                 if (Game.spawns[spawnname].spawning == null) {

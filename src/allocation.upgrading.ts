@@ -15,7 +15,7 @@ import { AnyStructure } from "../typings/structure";
 			targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_STORAGE && structure.store[RESOURCE_ENERGY] > 100000) ||
-                    (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.controller!==undefined&&structure.room.controller.level<4)
+                    (structure.structureType===STRUCTURE_SPAWN && structure.store[RESOURCE_ENERGY]===300&&structure.room.controller!==undefined&&structure.room.controller.level<4&&Memory.longrangemining[Memory.longrangemining.length-1].creeps.length>0)
                     || (structure.structureType===STRUCTURE_CONTAINER&&structure.store[RESOURCE_ENERGY]>0)
                 }
         	});

@@ -433,7 +433,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
         if(Memory.isswc) {
             for(let I of Memory.longrangemining) {
                 if(I.claimer===undefined&&(I.room!==undefined&&I.room!==room.name)&&currentspawn.memory.queue.length < 1&& room.controller.level >= 4 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0) {
-                    if((global.defenseNeeded < 20 || Memory.fighters.length >= 4)) {
+                    if((global.defenseNeeded < 20 || Memory.fighters.length >= 4)&&Memory.storecache>=20) {
                         currentspawn.queueAppend(
                             [MOVE,MOVE,CLAIM,CLAIM],
                             { spawnid: currentspawn.id, reserving: I.room,check:1,state:0},
