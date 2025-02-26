@@ -236,6 +236,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
         }
 
         Memory.haulers = room.memory.haulers
+
+        //Note that this is called here to prevent issues with no mining rooms
+        // Run the miner code for long-range mining logic
+        remotetick();
+
         let test = room.find(FIND_STRUCTURES, {
             filter: (structure:Structure) => {
                 return (structure.structureType == STRUCTURE_EXTRACTOR)
@@ -553,8 +558,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
         if (Memory.haulers.length > 0) {
             Memory.haulers.forEach(item => haulerforeach(item));
         }
-        // Run the miner code for long-range mining logic
-        remotetick();
+
         if (Game.cpu.bucket >= 2000) {
             if (currentspawn.memory.queen2 !== undefined) {
                 if (currentspawn.memory.queen2 in Game.creeps) {

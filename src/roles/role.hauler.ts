@@ -98,21 +98,22 @@ export function tick(creep:Creep) {
             creep.pos.findInRange(FIND_HOSTILE_CREEPS, 5, {
                 filter: function (creep:Creep) {
                     return Allies.indexOf(creep.owner.username) === -1 &&
-                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                    (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
                 }
             }).length > 0 &&
             creep.room.find(FIND_MY_CREEPS, {
                 filter: function (creep:Creep) {
-                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                    (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
                 }
             }).length === 0
         ) {
             let goals:Creep|null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,  {
                 filter: function (creep:Creep) {
                     return Allies.indexOf(creep.owner.username) === -1 &&
-                    (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                    (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
                 }
             })
+            console.log("hauler enemy detection")
             if(goals!==null) flee(
                 creep,
                 goals
@@ -216,13 +217,15 @@ export function tick(creep:Creep) {
                     creep.say("bad storage");
                 }
             }
-
+            //@ts-ignore
+            let spawn:StructureSpawn = Game.getObjectById(creep.memory.spawnid)
             if (
                 creep.memory.cachsource === undefined ||
                 creep.memory.cachsource === null ||
                 //@ts-ignore
                 (Game.getObjectById(creep.memory.cachsource).store.getFreeCapacity(RESOURCE_ENERGY) == 0 &&
-                    Game.getObjectById(creep.memory.cachsource))
+                    Game.getObjectById(creep.memory.cachsource)) ||
+                (Memory.isswc&&(spawn.room.getMasterSpawn().memory.queen===undefined||spawn.room.getMasterSpawn().memory.queen===undefined)&&(spawn.room.controller??{level:0}).level>=4)
             ) {
                 //@ts-ignore
                 let temp = Game.getObjectById(creep.memory.spawnid)

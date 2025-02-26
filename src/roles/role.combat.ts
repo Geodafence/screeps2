@@ -70,7 +70,12 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
     } else {
         var lastAction = creep.saying
     }
+    let knownPossible = true
     if(StrCalc.canWinRoom(creep.room)===false&&bescared) {
+        if(creep.pos.x>=50||creep.pos.x<=0||creep.pos.y>=50||creep.pos.y<=0) {
+            creep.moveTo(new RoomPosition(25,25,creep.room.name))
+            return
+        }
         creep.moveByPath(flee(creep,target,6))
 
             let alreadyrequested = -1;
@@ -82,16 +87,16 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
             if (alreadyrequested == -1&&(creep.room.controller?.level??0)<1) {
                 Memory.triorequests.push(creep.pos);
             }
-        return
+        knownPossible = false
     }
     if(creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
             if(creep.pos.getRangeTo(target) < 2) {
                 let hide = creep.pos.findInRange(FIND_MY_STRUCTURES, 2, {filter: (structure:Structure) => {
                     return structure.structureType == STRUCTURE_RAMPART
                 }})
-                if(hide.length > 0) {
+                if(hide.length > 0&&knownPossible) {
                     creep.moveTo(hide[0])
-                } else if(creep.getActiveBodyparts(ATTACK) === 0){
+                } else if(creep.getActiveBodyparts(ATTACK) === 0&&knownPossible){
                     creep.moveByPath(flee(creep,target,3))
                 }
             }
@@ -100,13 +105,13 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
             }}).length > 10) {
                 creep.rangedMassAttack()
             } else creep.rangedAttack(target)
-            if(creep.pos.getRangeTo(target) > 3) {
+            if(creep.pos.getRangeTo(target) > 3&&knownPossible) {
             creep.moveTo(target)
             }
         creep.say("RANGED_ATTACK")
     }
         if(creep.getActiveBodyparts(ATTACK) > 0) {
-            if((creep.attack(target) == ERR_NOT_IN_RANGE)) {
+            if((creep.attack(target) == ERR_NOT_IN_RANGE)&&knownPossible) {
                 creep.moveTo(target)
                 creep.say("ATTACK")
             }
@@ -238,16 +243,18 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
                 creep.memory.targetCreep = undefined
             }
         } else {
-            let sort = creep.room.find(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
-                return Allies.indexOf(creep.owner.username) === -1
-            }})
-            .sort((a,b)=>(b.pos.getRangeTo(creep)+
-            (Number(b.getActiveBodyparts(ATTACK)>0||b.getActiveBodyparts(RANGED_ATTACK)>0||b.getActiveBodyparts(HEAL)>0)*70))
-
-            -(a.pos.getRangeTo(creep)+
-            (Number(a.getActiveBodyparts(ATTACK)>0||a.getActiveBodyparts(RANGED_ATTACK)>0||a.getActiveBodyparts(HEAL)>0)*70))
-            )
-            let target1:Creep|null = sort[0]
+            let sort = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
+                return Allies.indexOf(creep.owner.username) === -1&&
+                (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
+            }});
+            let target1:Creep|null
+            if(!sort) {
+                target1 = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS,{filter: function(creep:Creep) {
+                    return Allies.indexOf(creep.owner.username) === -1
+                }});
+            } else {
+                target1 = sort
+            }
             let target2 = creep.room.find(FIND_HOSTILE_STRUCTURES);
             for(const t in target2) {
                 let I = target2[t]

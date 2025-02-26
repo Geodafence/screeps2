@@ -46,6 +46,7 @@ export function tick() {
         if (info.room === undefined&&RoomObject!==undefined) {
             for(let R of Memory.miningrooms) {
                 if(Memory.longrangemining.some((a)=>a.room===R.room)===false) {
+
                     Memory.longrangemining[temp].room = R.room
                 }
             }
@@ -59,6 +60,9 @@ export function tick() {
         }
         if(Memory.longrangemining[temp].room!==undefined) {
             if(Memory.miningrooms.some((a)=>a.room===Memory.longrangemining[temp].room)===false) {
+                if(Memory.longrangemining[temp].creeps.length>0) {
+                    Memory.storedcreeps.concat(Memory.longrangemining[temp].creeps)
+                }
                 Memory.longrangemining.splice(temp,1)
                 console.log("A")
                 break;
@@ -66,10 +70,14 @@ export function tick() {
         }
         let filter = Memory.longrangemining.filter((a)=>a.room===Memory.longrangemining[temp].room)
         if(filter.length>1) {
-            if(Memory.longrangemining.lastIndexOf(filter[filter.length-1])>=temp) {
+            let index = Memory.longrangemining.lastIndexOf(filter[filter.length-1])
+            if(Memory.longrangemining[index].creeps.length>0) {
+                Memory.storedcreeps.concat(Memory.longrangemining[index].creeps)
+            }
+            if(index>=temp) {
                 temp -= 1
             }
-            Memory.longrangemining.splice(Memory.longrangemining.lastIndexOf(filter[filter.length-1]),1)
+            Memory.longrangemining.splice(index,1)
             console.log("B")
         }
         // If no creeps are currently wanted for mining, check if there's a creep available to send
@@ -163,12 +171,12 @@ export function tick() {
                 hostiles = creep.room.find(FIND_HOSTILE_CREEPS, {
                     filter: function (creep:Creep) {
                         return Allies.indexOf(creep.owner.username) === -1 &&
-                        (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL)||creep.getActiveBodyparts(CLAIM))
+                        (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0||creep.getActiveBodyparts(CLAIM)>0)
                     }
                 })
                 let friendly = creep.room.find(FIND_MY_CREEPS, {
                     filter: function (creep:Creep) {
-                        (creep.getActiveBodyparts(ATTACK)||creep.getActiveBodyparts(RANGED_ATTACK)||creep.getActiveBodyparts(HEAL))
+                        return (creep.getActiveBodyparts(ATTACK)>0||creep.getActiveBodyparts(RANGED_ATTACK)>0||creep.getActiveBodyparts(HEAL)>0)
                     }
                 })
 
@@ -177,6 +185,7 @@ export function tick() {
                     hostiles = TSdumb
                 }
                 if (hostiles.length > 0&&friendly.length===0) {
+                    console.log("LRM enemy detection")
                     let alreadyrequested = -1
                     for (let temp in Memory.defenserequests) {
                         if (Memory.defenserequests[temp].room == creep.room.name) {

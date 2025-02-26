@@ -70,6 +70,7 @@ import { Allies } from "../libs/allyLibs/allyConsts"
                 }
             }).length === 0
         ) {
+            console.log("harvester enemy detection")
             let alreadyrequested = -1;
             for (let temp in Memory.defenserequests) {
                 if (Memory.defenserequests[temp].room == creep.room.name) {
