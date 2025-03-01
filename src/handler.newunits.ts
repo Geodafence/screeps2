@@ -418,7 +418,7 @@ export function newbuildcheck(spawnname: string) {
                 : Memory.longrangemining.length-1
     //@ts-ignore
     let buildNeedBool = checkbuildwant(spawnname) >= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length
-    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && ((Memory.haulers.length>=(!mSpawn.room.storage?Math.floor(Memory.haulerSatisfied/2):Memory.haulerSatisfied)
+    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && ((Memory.haulers.length>=(Math.floor(Memory.haulerSatisfied/2))
         &&Memory.longrangemining[LRMquad].creeps.length>0) || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
         report.formatBasic("debug","build1")
         if (buildNeedBool) {

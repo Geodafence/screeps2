@@ -1,14 +1,7 @@
 import { ConstructionSite } from "../../../typings/construction-site"
 import { Id } from "../../../typings/helpers"
 import { report } from "../roomReporting"
-function generateName() {
-    const spawnStarts = ["The Spooky","The Amazing","The Epic","The Baffling","The Giant", "The Red","The Northern","The Worrying","The Insane","The Eyebrow Raising","The Weirdly Wholesome","The Required","The Fascinating","The","The Big Stupid","The Halfwit"]
-    const spawnMids = [" Scary "," Creep "," Spawning "," Idiotic "," Lazy ", " Spy in The "," Mountain "," Choices of The "," Well Goblin in The "," Completely Ruined "," Short "," Extra "," Life Of The "," Car Crash Nature Of The "]
-    const spawnEnds = ["Skeleton","Circus","Location","Decision","Cat","Base","Codebase Owner","Walls","Room","Soccer Field","Story","Overlords","Beta","Himalayas"]
-    return spawnStarts[Math.floor(spawnStarts.length*Math.random())] +
-    spawnMids[Math.floor(spawnMids.length*Math.random())] +
-    spawnEnds[Math.floor(spawnEnds.length*Math.random())]
-}
+import { generateName } from "../general.functions"
 export function createAndUpdateCheckerSite(memBase:{[link:string]:any},memLink:string,spawnname:string) {
     if(Game.cpu.bucket<5000) {
         return

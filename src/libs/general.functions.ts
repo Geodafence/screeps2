@@ -110,3 +110,11 @@ export function addCoordinates(coord1: string, coord2: string): string {
 
     return hResult + vResult;
 }
+export function generateName() {
+    const spawnStarts = ["The Spooky","The Amazing","The Epic","The Baffling","The Giant", "The Red","The Northern","The Worrying","The Insane","The Eyebrow Raising","The Weirdly Wholesome","The Required","The Fascinating","The","The Big Stupid","The Halfwit","The Absurd","The Beautiful"]
+    const spawnMids = [" Scary "," Creep "," Spawning "," Idiotic "," Lazy ", " Spy in The "," Mountain "," Choices of The "," Well Goblin in The "," Completely Ruined "," Short "," Extra "," Life Of The "," Car Crash Nature Of The "," Choice to Visit The "," Randomized "," Eye-Popping Visual of The "]
+    const spawnEnds = ["Skeleton","Circus","Location","Decision","Cat","Base","Codebase Owner","Walls","Room","Soccer Field","Story","Overlords","Beta","Himalayas"]
+    return spawnStarts[Math.floor(spawnStarts.length*Math.random())] +
+    spawnMids[Math.floor(spawnMids.length*Math.random())] +
+    spawnEnds[Math.floor(spawnEnds.length*Math.random())]
+}

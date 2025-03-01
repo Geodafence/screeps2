@@ -1,4 +1,4 @@
-
+import { generateName } from "./libs/general.functions"
 
     /**
      *
@@ -29,5 +29,5 @@
     export function newid() {
         var cur = Memory.assignedids
         Memory.assignedids += 1
-        return cur.toString();
+        return generateName()+" "+cur.toString();
     }

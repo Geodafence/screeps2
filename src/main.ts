@@ -63,7 +63,51 @@ if ("storedcreeps" in Memory != true) {
     Memory.longrangeminingcreeps = new Array();
     */
 }
+let set = {
+    triorequests: [],
+        scoutedRooms: {},
+        wantToClaim: {
+        },
+        defenserequests: [],
+        structures: {},
 
+        // Arrays
+        harassers: [],
+        trios: [],
+        longRangeBuilders: [],
+        claimers: {},
+        scouts:[],
+        fighters: [],
+        haulers: [],
+        usedsources: [],
+        buildersources: [],
+        upgradersources: [],
+        storedcreeps: [],
+        longrangemining: [],
+        longrangeminingcreeps: [],
+        miningrooms: [],
+
+        // Objects
+        LRMpaths: {},
+        roomCache: {},
+
+        // 0s
+        haulerSatisfied: 0,
+        assignedids: 0,
+        builderlevel: 0,
+        harvlevel: 0,
+        haulerlevel: 0,
+        combatlevel: 0,
+        haulerneeded: 0,
+        storecache: 0,
+};
+for(let I in set) {
+    //@ts-ignore
+    if(Memory[I]===undefined) {
+        //@ts-ignore
+        Memory[I] = set[I];
+    }
+}
 // Setup mining rooms and global update lists.
 Memory.miningrooms = [
     { room: "E8S33", usedSegment: 0 },
@@ -87,7 +131,7 @@ global.methods["createqueen"] = createqueen
 global.methods["createhauler"] = createhauler
 global.defenseNeeded = 0
 global.updatecache = 100;
-
+Memory.isswc = 1
 console.log("restarting loop");
 //var ramparttest = require("rampartcalc")
 //console.log(ramparttest.findOptimalRamparts(Game.rooms["E52S18"]))
