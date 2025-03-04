@@ -22,7 +22,7 @@ function dismantleInvaderCore(creep: Creep, id: Id<any>) {
         }
     }
 }
-export function tick() {
+export function tick(mainRoom:Room) {
     let run: number = 0
     if(Memory.miningrooms.length<Memory.longrangemining.length) {
         for(let amog of Memory.longrangemining) {
@@ -61,6 +61,10 @@ export function tick() {
         if(Memory.longrangemining[temp].room!==undefined) {
             if(Memory.miningrooms.some((a)=>a.room===Memory.longrangemining[temp].room)===false) {
                 if(Memory.longrangemining[temp].creeps.length>0) {
+                    for(let I of Memory.longrangemining[temp].creeps) {
+                        Game.creeps[I].memory.cachsource=undefined
+                        Game.creeps[I].memory.check = undefined
+                    }
                     Memory.storedcreeps.concat(Memory.longrangemining[temp].creeps)
                 }
                 Memory.longrangemining.splice(temp,1)
@@ -184,20 +188,23 @@ export function tick() {
                     let TSdumb:Structure[] = creep.room.find(FIND_HOSTILE_STRUCTURES)
                     hostiles = TSdumb
                 }
-                if (hostiles.length > 0&&friendly.length===0) {
-                    console.log("LRM enemy detection")
-                    let alreadyrequested = -1
-                    for (let temp in Memory.defenserequests) {
-                        if (Memory.defenserequests[temp].room == creep.room.name) {
-                            alreadyrequested = 1
-                        }
-                    }
-                    if (alreadyrequested == -1) {
-                        Memory.defenserequests.push({ x: creep.pos.x, y: creep.pos.y, room: creep.room.name })
-                    }
-                    global.defenseNeeded = 40
-                }
+                if(hostiles.length > 0) {
+                    creep.moveTo(mainRoom.getMasterSpawn(),{reusePath:40})
 
+                    if (friendly.length===0) {
+                        console.log("LRM enemy detection")
+                        let alreadyrequested = -1
+                        for (let temp in Memory.defenserequests) {
+                            if (Memory.defenserequests[temp].room == creep.room.name) {
+                                alreadyrequested = 1
+                            }
+                        }
+                        if (alreadyrequested == -1) {
+                            Memory.defenserequests.push({ x: creep.pos.x, y: creep.pos.y, room: creep.room.name })
+                        }
+                        global.defenseNeeded = 40
+                    }
+                }
                 if (allsettled) {
                     if(typeof creep.memory.registeredsource!=="number"&&creep.memory.registeredsource!==undefined) {
                         if(Game.getObjectById(creep.memory.registeredsource)!==undefined) {

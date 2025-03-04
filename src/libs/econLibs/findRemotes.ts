@@ -1,6 +1,10 @@
 import { getTrueDistance, addCoordinates } from "../general.functions"
 
 export function findSuitableRemotes(room: Room):{room: string;linkedroom?: string;usedSegment: number;}[] {
+    let banned:string[] = []
+    if(Game.shard.name==="thunderdrone") {
+        banned = ["E7S7","E8S7","E8S8"]
+    }
     let coords = ["W0N1","E1N1","E1N0","E1S1","E0S1","W1S1","W1N0"]
     let mid = new RoomPosition(25,25,room.name)
     let foundSources = 0
@@ -13,7 +17,8 @@ export function findSuitableRemotes(room: Room):{room: string;linkedroom?: strin
         let Sroom = Memory.scoutedRooms[roomCheck]
         if(Sroom!==undefined) {
             if(Sroom.controller.owned!==undefined||
-                (Sroom.controller.reservation!==undefined&&Sroom.controller.reservation!==room.controller?.owner?.username)||Memory.miningrooms.some((a)=>a.room===roomCheck)) {
+            (Sroom.controller.reservation!==undefined&&Sroom.controller.reservation!==room.controller?.owner?.username)||Memory.miningrooms.some((a)=>a.room===roomCheck)
+            || banned.indexOf(roomCheck)!==-1) {
                 continue;
             }
             if(PathFinder.search(mid,Sroom.sources).cost<100) {
