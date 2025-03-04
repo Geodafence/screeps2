@@ -3,8 +3,10 @@ import { Structure } from "../../typings/structure";
 import { getTrueDistance } from "../libs/general.functions";
 import { report } from "../libs/roomReporting"
 import { Allies } from "../libs/allyLibs/allyConsts"
+import { strengthCalc } from "../libs/combatLibs/calcCreepPower"
+import { simpleAllies } from "../libs/allyLibs/simpleAllies"
 export function tick(trio: trioMemory): trioMemory | null {
-
+    let calc = new strengthCalc()
     if (trio.state === "moving") {
         if (Game.creeps[trio.mainCreep] === undefined) {
             return null
@@ -55,6 +57,8 @@ export function tick(trio: trioMemory): trioMemory | null {
             return null
         }
         if (trio.isSkrimisher) {
+
+
             trio = healAttacker(trio)
 
             if (getTrueDistance(Game.creeps[trio.healerCreeps[0]].pos, Game.creeps[trio.mainCreep].pos) > 2 && Game.creeps[trio.healerCreeps[0]].room.name === Game.creeps[trio.mainCreep].room.name) {
@@ -67,11 +71,20 @@ export function tick(trio: trioMemory): trioMemory | null {
             }
             let attacker: Creep = Game.creeps[trio.mainCreep]
             attacker.moveTo(new RoomPosition(25, 25, trio.room), { reusePath: 20 })
+
             if (attacker.room.name === trio.room) {
                 trio.state = "attacking"
             }
             if (!Game.creeps[trio.mainCreep]) {
                 trio.state = "retreating"
+            } else {
+                if(!calc.canWinRoom(attacker.room)) {
+                    if((attacker.room.controller??{level:0}).level>=3) {
+                        simpleAllies.requestDefense({roomName:attacker.room.name,priority:0.7})
+                    } else {
+                        simpleAllies.requestDefense({roomName:attacker.room.name,priority:0.2})
+                    }
+                }
             }
         } else {
             trio = healAttacker(trio)

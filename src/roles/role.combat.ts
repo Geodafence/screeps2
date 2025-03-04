@@ -90,7 +90,7 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
         knownPossible = false
     }
     if(creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
-            if(creep.pos.getRangeTo(target) < 2) {
+            if(creep.pos.getRangeTo(target) < 3) {
                 let hide = creep.pos.findInRange(FIND_MY_STRUCTURES, 2, {filter: (structure:Structure) => {
                     return structure.structureType == STRUCTURE_RAMPART
                 }})
@@ -281,7 +281,9 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
                     creep.memory.targetCreep = undefined
                 }
             } else {
-                let target2:AnyOwnedStructure|AnyOwnedStructure[] = creep.room.find(FIND_HOSTILE_STRUCTURES);
+                let target2:AnyOwnedStructure|AnyOwnedStructure[] = creep.room.find(FIND_HOSTILE_STRUCTURES,{filter:(a)=>{
+                    return a.structureType!==STRUCTURE_POWER_BANK
+                }});
                 if(target2[0]!==undefined) {
                 if(target2[0].structureType === STRUCTURE_CONTROLLER) {
                     target2 = target2[1]
@@ -297,7 +299,11 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
                         if(creep.heal(Tcreep[0])!==OK) {
                             creep.moveTo(Tcreep[0])
                         }
+                    } else {
+                        creep.moveTo(theFlag,{reusePath: 20,stroke: '#ff0000'})
                     }
+                } else {
+                    creep.moveTo(theFlag,{reusePath: 20,stroke: '#ff0000'})
                 }
             }
         }

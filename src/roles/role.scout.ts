@@ -66,7 +66,7 @@ export function tick(creep: Creep) {
                 if (Memory.harass === undefined) {
                     Memory.harass = []
                 }
-                if (data.controller.reservation !== "Invader") {
+                if (data.controller.reservation !== "Invader"&&Allies.indexOf(data.controller.reservation)===-1) {
                     report.formatImportant("*", "harass target found")
                     console.log("harass target found")
                     Memory.harass.push(creep.room.name)
