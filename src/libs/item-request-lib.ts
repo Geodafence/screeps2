@@ -2,7 +2,9 @@
 import { _HasId, Id } from "../../typings/helpers";
 import { Structure } from "../../typings/structure";
 
-export function containsRequest(spawn: StructureSpawn, buildId: _HasId, type = null, amount = null) {
+
+export function containsRequest(buildId: Id<Structure>, type:ResourceConstant|null = null, amount:number|null = null) {
+    let spawn =  Game.getObjectById(buildId).room.getMasterSpawn()
     let ret = false
     for (let I in spawn.memory.itemrequests) {
         let request = spawn.memory.itemrequests[I]
@@ -132,6 +134,7 @@ export function sendrequest(building: Structure, am: number, type: ResourceConst
         storage: building.room.storage.id
     })
 }
+
 export function removerequests(building: Structure) {
     for (let I in building.room.getMasterSpawn().memory.itemrequests) {
         let info = building.room.getMasterSpawn().memory.itemrequests[I]
