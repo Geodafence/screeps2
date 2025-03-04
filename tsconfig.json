@@ -19,7 +19,7 @@
     "noImplicitReturns": true,
     "noEmit": false,
     "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false
+    "allowUnreachableCode": true
   },
   "exclude": [
     "node_modules"
