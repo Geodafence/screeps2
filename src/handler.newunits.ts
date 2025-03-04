@@ -113,7 +113,7 @@ export function checkharvwant(ref: string | number) {
 }
 export function newharvcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    if ((global.defenseNeeded >= 20 && Memory.fighters.length < 4) || global.createdunit == 1 || Game.spawns[spawnname].room.controller === undefined) {
+    if (global.createdunit == 1 || Game.spawns[spawnname].room.controller === undefined) {
         return
     }
     let type = "harv"
@@ -166,12 +166,14 @@ export function newharvcheck(spawnname: string) {
             }
         }
     }
-
+    if ((global.defenseNeeded >= 20 && Memory.fighters.length < 4) || global.createdunit == 1) {
+        return
+    }
     allstores = Memory.storecache
     allstorescheck = Memory.storecache
     type = "LRM"
     //@ts-ignore
-    if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1 || (Memory.longrangemining[0].creeps.length === 0 && Memory.longrangemining.length > 0))) {
+    if (Game.spawns[spawnname].room.controller !== undefined && (Game.spawns[spawnname].room.controller.level == 1 || (Memory.longrangemining[Memory.longrangemining.length-1].creeps.length === 0 && Memory.longrangemining.length > 0))) {
         allstores = 0
         allstorescheck = allstores
     }
@@ -193,7 +195,7 @@ export function newharvcheck(spawnname: string) {
             [MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK],
         ]
         milestones = {
-            20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, WORK, WORK, WORK, WORK, WORK, WORK],
+            20: [MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,CARRY],
             30: [MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK, WORK, WORK, CARRY]
         }
         if (allmodulelevels.length - 1 < allstores) {
@@ -374,7 +376,7 @@ export function newbuildcheck(spawnname: string) {
         if (Memory.isswc) {
             milestones = {
                 20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY],
-                30: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
+                30: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY],
                 //50: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
             }
         } else {
@@ -418,7 +420,7 @@ export function newbuildcheck(spawnname: string) {
                 : Memory.longrangemining.length-1
     //@ts-ignore
     let buildNeedBool = checkbuildwant(spawnname) >= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length
-    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && ((Memory.haulers.length>=(Math.floor(Memory.haulerSatisfied/2))
+    if (Game.spawns[spawnname].room.energyAvailable >= buildercost && ((Memory.haulers.length>=(Memory.haulerSatisfied-1)
         &&Memory.longrangemining[LRMquad].creeps.length>0) || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
         report.formatBasic("debug","build1")
         if (buildNeedBool) {
@@ -536,8 +538,12 @@ export function newhaulercheck(spawnname: string) {
 
     //if(Memory.isswc) if(Memory.haulerSatisfied>4&&Game.cpu.getUsed()>Game.cpu.limit*0.75) Memory.haulerSatisfied = 4
     if (Memory.isswc) {
+        let max = 9
+        if(Game.spawns[spawnname].room.storage) if((Game.spawns[spawnname].room.storage??{store:{"energy":0}}).store[RESOURCE_ENERGY]>100000) max = 7
             //@ts-ignore
-        if (Memory.haulerSatisfied > 7 && Game.spawns[spawnname].room.controller.level >= 4 && Game.spawns[spawnname].room.controller.level < 7) Memory.haulerSatisfied = 7
+        if (Memory.haulerSatisfied > max && Game.spawns[spawnname].room.controller.level >= 4 && Game.spawns[spawnname].room.controller.level < 7) {
+            Memory.haulerSatisfied = max
+        }
     }
     //if(Game.spawns[spawnname].room.controller.level<3&&Memory.haulerSatisfied>10) Memory.haulerSatisfied = 10
 
