@@ -2,10 +2,12 @@ import { simpleAllies } from "./simpleAllies"
 import { respondToDefenseRequests } from "./respond.defense"
 import { respondToResourceRequests } from "./respond.resource"
 export function run(room:Room) {
-    simpleAllies.initRun()
+    try {
+        simpleAllies.initRun()
 
-    respondToDefenseRequests(room)
-    respondToResourceRequests(room)
+        respondToDefenseRequests(room)
+        respondToResourceRequests(room)
 
-    simpleAllies.endRun()
+        simpleAllies.endRun()
+    } catch(e) {}
 }

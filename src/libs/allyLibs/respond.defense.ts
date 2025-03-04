@@ -8,6 +8,9 @@ export function respondToDefenseRequests(room:Room) {
     if (!defenseRequests) return
 
     for (const request of defenseRequests) {
+
+        if(request===null) continue
+
         let start = new RoomPosition(25,25,room.name)
         let roomPos = new RoomPosition(25,25,request.roomName)
         if(getTrueDistance(start,roomPos)/50<=8) {

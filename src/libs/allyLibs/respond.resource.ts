@@ -13,6 +13,14 @@ export function respondToResourceRequests(room:Room) {
 
     for (const request of resourceRequests) {
 
+        if(request===null) continue
+
         let structRef = Memory.structures[room.terminal.id]
+        if(request.terminal&&room.terminal&&room.storage) {
+            if(room.storage.store[request.resourceType]>request.amount+(20000-20000*request.priority)) {
+                structRef.data.storedRequests.push({sendTo:request.roomName,sendtype:"direct",resType:request.resourceType,amount:request.amount})
+            }
+        }
+        Memory.structures[room.terminal.id] = structRef
     }
 }

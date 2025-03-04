@@ -1,10 +1,7 @@
-export const allies = [
-    'Player1',
-    'Player2',
-    'Player3',
-]
+import { Allies } from "./allyConsts"
+const allies = Allies
 // This is the conventional segment used for team communication
-export const allySegmentID = 90
+export const allySegmentID = 77
 
 // This isn't in the docs for some reason, so we need to add it
 export const maxSegmentsOpen = 10
@@ -252,7 +249,6 @@ class SimpleAllies {
     requestFunnel(args: FunnelRequest) {
         this.myRequests.funnel.push(args)
     }
-
     requestEcon(args: EconRequest) {
         this.myRequests.econ = args
     }
