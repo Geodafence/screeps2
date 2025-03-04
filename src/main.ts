@@ -11,8 +11,12 @@ import { getTrueDistance, Lremove } from "./libs/general.functions";
 import { tick as haulertick } from "./roles/role.hauler";
 import { run as minharvtick } from "./roles/role.mineralharv";
 import { tick as scouttick } from "./roles/role.scout"
+
+
 import { tick as terminaltick } from "./libs/terminalCalculator";
 import { tick as linktick } from "./structure.link";
+import { checkRampartPassing } from "./structs/structure.rampart"
+
 import "./libs/spawnUtils";
 import { tick as queentick } from "./roles/role.queen";
 import { any, isUndefined } from 'lodash';
@@ -20,7 +24,10 @@ import { run as refillTick } from './roles/role.buildrefill';
 import { ErrorMapper } from "./libs/ErrorMapper";
 import { report } from "./libs/roomReporting"
 import { tick as triotick } from "./roles/role.trio"
+import { run as allyTick} from "./libs/allyLibs/responseMain"
 import { simpleAllies } from "./libs/allyLibs/simpleAllies"
+import { strengthCalc } from "./libs/combatLibs/calcCreepPower"
+import { buildRamparts } from "./libs/baseBuildingLibs/rampartCalc"
 import { findSuitableRemotes } from "./libs/econLibs/findRemotes"
 // Import typings
 '../typings/creep';
@@ -261,8 +268,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
                         if (creep.memory.linktomine===undefined) {
                             let dist = getTrueDistance(new RoomPosition(currentspawn.pos.x, currentspawn.pos.y, currentspawn.room.name), new RoomPosition(creep.pos.x, creep.pos.y, creep.room.name))
-                            if (creep.room.controller && creep.room.controller.reservation) dist = dist * 1.5
-                            if(creep.getActiveBodyparts(WORK)<7) dist = dist*(creep.getActiveBodyparts(WORK)/6)
+                            if (creep.room.controller && creep.room.controller.reservation) dist = dist * 1.8
+                            if(creep.getActiveBodyparts(WORK)<5) dist = dist*(creep.getActiveBodyparts(WORK)/6)
                             full += dist
                         }
                     }
@@ -283,7 +290,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
         //Note that this is called here to prevent issues with no mining rooms
         // Run the miner code for long-range mining logic
-        remotetick();
+        remotetick(room);
 
         let test = room.find(FIND_STRUCTURES, {
             filter: (structure:Structure) => {
@@ -308,8 +315,14 @@ export const loop = ErrorMapper.wrapLoop(() => {
         if (Game.cpu.bucket < 2000) {
             report.formatImportant("*", "low bucket, disabling non-needed codebases")
         }
+
+        checkRampartPassing(room)
         for (let towerold in towers) {
             let tower: StructureTower = towers[towerold]
+
+            let spawns = tower.room.find(FIND_MY_SPAWNS)
+            for(let spawn of spawns) if(spawn.hits<spawn.hitsMax) tower.repair(spawn);
+
             let attackers: Creep[] = tower.room.find(FIND_HOSTILE_CREEPS, {
                 filter: function (creep: Creep) {
                     return Allies.indexOf(creep.owner.username) === -1
@@ -332,8 +345,29 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     attackers = healers
                     towerdata.attackedhealer = 1
                 }
+                let strCalc = new strengthCalc()
                 tower.attack(attackers[0])
+                if(strCalc.getEnemyRoomPower(tower.room).estimatedPower>=250) {
+                    simpleAllies.requestDefense({roomName:tower.room.name,priority:0.7})
+                }
+                if(tower.room.storage) {
+                    if(tower.room.storage.store[RESOURCE_ENERGY]<50000) {
+                        simpleAllies.requestResource({
+                            resourceType:RESOURCE_ENERGY,
+                            priority:0.7,
+                            roomName:tower.room.name,
+                            amount:70000-tower.room.storage.store[RESOURCE_ENERGY]
+                        })
+                    }
+                }
+
             } else {
+                let confirm = tower.room.find(FIND_STRUCTURES, {
+                    filter: object => object.hits < 2000 && object.hits<object.hitsMax
+                }).length === 0
+                if(confirm&&tower.store[RESOURCE_ENERGY]<=550) {
+                    continue
+                }
                 let objHits = 2000000
                     //@ts-ignore
                 if(tower.room.controller.level<=7) {
@@ -396,6 +430,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
         }
         global.defenseNeeded -= 1
         for (let spawn of allspawns) {
+            if(spawn.hits<spawn.hitsMax) {
+                spawn.room.controller?.activateSafeMode()
+            }
             let nearby = []
             newhaulercheck(spawn.name);
             if (spawn.spawning === null && nearby.length <= 0 && spawn.room.controller && room.memory.spawnCooldown <= 0) {
@@ -481,10 +518,10 @@ export const loop = ErrorMapper.wrapLoop(() => {
         }
         if(Memory.isswc) {
             for(let I of Memory.longrangemining) {
-                if(I.claimer===undefined&&(I.room!==undefined&&I.room!==room.name)&&currentspawn.memory.queue.length < 1&& room.controller.level >= 4 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0) {
+                if(I.claimer===undefined&&(I.room!==undefined&&I.room!==room.name)&&currentspawn.memory.queue.length < 1&& room.controller.level >= 3 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0) {
                     if((global.defenseNeeded < 20 || Memory.fighters.length >= 4)&&Memory.storecache>=20) {
                         currentspawn.queueAppend(
-                            [MOVE,MOVE,CLAIM,CLAIM],
+                            (room.controller??{level:0}).level===3?[MOVE,CLAIM]:[MOVE,MOVE,CLAIM,CLAIM],
                             { spawnid: currentspawn.id, reserving: I.room,check:1,state:0},
                             "claimer"
                         )
@@ -528,6 +565,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     room.memory.buildState = {
                         autoBuildOn: true,
                         plannedRoads: false,
+                        plannedRamparts: false
                     }
                 }
 
@@ -553,7 +591,18 @@ export const loop = ErrorMapper.wrapLoop(() => {
                             confirmed:false
                         }
                     }
-                    createAndUpdateCheckerSite(room.memory.buildState,"buildInfo",currentspawn.name)
+                    if(room.memory.buildState.plannedRamparts===false&&room.controller.level>=3) {
+                        buildRamparts(currentspawn)
+                        room.memory.buildState.plannedRamparts = true
+                    }
+                    if(Game.time%100===0&&room.memory.buildState.buildInfo.sites.length===0) {
+                        room.memory.buildState.buildInfo.builds = []
+                        room.memory.buildState.buildInfo.confirmed = false
+                        room.memory.buildState.buildInfo.built = []
+                    }
+                    if(Game.time%10===0) {
+                        createAndUpdateCheckerSite(room.memory.buildState,"buildInfo",currentspawn.name)
+                    }
                 }
             }
 
@@ -616,6 +665,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 //terminaltick(room.terminal)
             }
         }
+
+        allyTick(room)
 
         report.formatBasic(room.name, "LRM sites: " + room.memory.LRMdata.length)
         report.formatBasic(room.name, "haulers: " + Memory.haulers.length + "/" + Memory.haulerSatisfied)
