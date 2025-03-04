@@ -49,7 +49,7 @@ import { AnyStructure } from "../typings/structure";
         } else {
 	       remove("upgradersources",creep);
            //@ts-ignore
-           creep.moveTo(spawn.room.controller,{reusePath: 40,visualizePathStyle: {stroke: '#f46f02'}});
+           creep.moveTo(spawn.room.controller,{reusePath: 40,range:3,visualizePathStyle: {stroke: '#f46f02'}});
            //@ts-ignore
             if(creep.upgradeController(spawn.room.controller) == ERR_NOT_IN_RANGE) {
             }

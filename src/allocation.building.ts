@@ -62,7 +62,7 @@ import { ConstructionSite } from "../typings/construction-site";
                 } else {
                     // If the extra task is upgrading, move to and upgrade the room controller
                     //@ts-ignore
-                    creep.moveTo(spawn.room.controller, {reusePath: 40, visualizePathStyle: {stroke: '#f46f02'}});
+                    creep.moveTo(spawn.room.controller, {reusePath: 40,range:3, visualizePathStyle: {stroke: '#f46f02'}});
                     //@ts-ignore
                     if(creep.upgradeController(spawn.room.controller) == ERR_NOT_IN_RANGE) {
                     }
