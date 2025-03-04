@@ -15,14 +15,12 @@ export function createAndUpdateCheckerSite(memBase:{[link:string]:any},memLink:s
     })
     if(memBase[memLink].confirmed===false) {
         test.checkerCalculate(spawnname)
-        test.builds.sort((a, b) =>
-            (Number(a.type === STRUCTURE_ROAD) - Number(b.type === STRUCTURE_ROAD)) ||
-            (new RoomPosition(a.x, a.y, Game.spawns[spawnname].room.name).getRangeTo(Game.spawns[spawnname]) -
-            new RoomPosition(b.x, b.y, Game.spawns[spawnname].room.name).getRangeTo(Game.spawns[spawnname])
-        ));
+
         memBase[memLink] = {builds:test.builds,sites:test.sites,built:[]}
         memBase[memLink].builds = test.builds
-        memBase[memLink].sites = test.sites
+        if(memBase[memLink].sites.length===0) {
+            memBase[memLink].sites = test.sites
+        }
         memBase[memLink].built = test.built
         memBase[memLink].confirmed = true
     }
@@ -85,9 +83,14 @@ export class checkerBoard {
             this.builds.sort((a, b) =>
                 (Number(a.type === STRUCTURE_ROAD) - Number(b.type === STRUCTURE_ROAD))
             );
+            this.builds.sort((a, b) =>
+                (Number(a.type === STRUCTURE_ROAD) - Number(b.type === STRUCTURE_ROAD)) ||
+                (new RoomPosition(a.x, a.y, spawn.room.name).getRangeTo(spawn) -
+                new RoomPosition(b.x, b.y, spawn.room.name).getRangeTo(spawn)
+            ));
             while(this.sites.length<infoPak.buildlimit&&this.builds.length>0) {
 
-                if(iter>2) {
+                if(iter>this.builds.length) {
                     break
                 }
 
@@ -106,14 +109,27 @@ export class checkerBoard {
                         }
                     }
                     confirm = pos.createConstructionSite(site.type,spawnName)
-                } else {
+                } else if(site.type!==STRUCTURE_ROAD||(spawn.room.controller??{level:0}).level>=5){
+                    console.log("Attempting to build "+JSON.stringify(site))
                     //console.log(pos,site.type)
                     //@ts-ignore
                     confirm = pos.createConstructionSite(site.type)
                 }
-
-                if(confirm!==OK&&confirm!==-7) {
-                    this.builds.push(site)
+                if(confirm!==OK) {
+                    let confirm = false
+                    const look = pos.look()
+                    look.forEach(function(lookObject) {
+                        if(lookObject.type == LOOK_STRUCTURES &&
+                        (lookObject[LOOK_STRUCTURES]?.structureType === site?.type)) {
+                            confirm = true
+                        }
+                    });
+                    if(confirm) {
+                        console.log("something was already built at "+site.type)
+                        this.built.push(site)
+                    } else {
+                        this.builds.push(site)
+                    }
                     //console.log("ERR "+confirm)
                 } else {
                     console.log("built "+site.type)
