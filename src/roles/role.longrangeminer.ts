@@ -117,15 +117,21 @@ export function tick(mainRoom:Room) {
             }
             let allsettled = 1
             // Iterate through all assigned creeps for this mining room
+            let filter:string[] = []
             for (const nameold in Memory.longrangemining[temp].creeps) {
                 let Cname = Memory.longrangemining[temp].creeps[nameold];
                 let creep = Game.creeps[Cname];
                 if (creep !== undefined) {
+                    if(creep.memory.registeredsource!==undefined) {
+                        //@ts-ignore
+                        filter.push(creep.memory.registeredsource)
+                    }
                     if (creep.memory.check !== 1) {
                         allsettled = 0
                     }
                 }
             }
+            Memory.longrangemining[temp].sources = Memory.longrangemining[temp].sources.filter((a)=>filter.indexOf(a)!==-1)
             if(Memory.longrangemining[temp].claimer!==undefined) {
                 //@ts-ignore
                 let claimer:Creep = Game.creeps[Memory.longrangemining[temp].claimer]
@@ -185,12 +191,12 @@ export function tick(mainRoom:Room) {
                 })
 
                 if (hostiles.length === 0) {
-                    let TSdumb:Structure[] = creep.room.find(FIND_HOSTILE_STRUCTURES)
+                    let TSdumb:Structure[] = creep.room.find(FIND_HOSTILE_STRUCTURES,{filter:(a)=>a.structureType!==STRUCTURE_RAMPART})
                     hostiles = TSdumb
                 }
                 if(hostiles.length > 0) {
                     creep.moveTo(mainRoom.getMasterSpawn(),{reusePath:40})
-
+                    if(creep.store.energy>0) creep.drop(RESOURCE_ENERGY)
                     if (friendly.length===0) {
                         console.log("LRM enemy detection")
                         let alreadyrequested = -1
@@ -204,6 +210,7 @@ export function tick(mainRoom:Room) {
                         }
                         global.defenseNeeded = 40
                     }
+                    continue;
                 }
                 if (allsettled) {
                     if(typeof creep.memory.registeredsource!=="number"&&creep.memory.registeredsource!==undefined) {
@@ -287,7 +294,7 @@ export function tick(mainRoom:Room) {
 
                 // If the creep's energy is not full and it should be mining
                 if (creep.memory.state !== "moving") {
-                    if (creep.room.name != RoomObject.room) {
+                    if (creep.room.name != RoomObject.room||(creep.pos.x>49||creep.pos.x<2||creep.pos.y>49||creep.pos.y<2)) {
 
                         creep.moveTo(new RoomPosition(25, 25, RoomObject.room), { reusePath: 40, visualizePathStyle: { stroke: '#ffffff' } });
                         //if(creep.memory._move) {
@@ -297,6 +304,9 @@ export function tick(mainRoom:Room) {
                     } else {
                         if (creep.memory.check === 1 && creep.getActiveBodyparts(WORK) >= 12) {
                             continue
+                        }
+                        if(creep.memory.registeredsource===undefined) {
+                            creep.moveTo(new RoomPosition(25, 25, RoomObject.room), { reusePath: 40, visualizePathStyle: { stroke: '#ffffff' } })
                         }
                         info = _register("sources", creep, true, Memory.longrangemining[temp]);
                         if (harvest(creep) == OK) {
