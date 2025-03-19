@@ -327,10 +327,10 @@ export function checkbuildwant(ref: string | number) {
     if (Memory.isswc) {
         //@ts-ignore
         if (Game.spawns[ref].room.controller !== undefined && (Game.spawns[ref].room.controller.level >= 7)) {
-            return 4
+            return 7
         //@ts-ignore
         } else if ((Game.spawns[ref].room.controller.level >= 4)) {
-            return 7
+            return 4
         } else {
             return 14
         }
@@ -350,7 +350,7 @@ export function checkbuildwant(ref: string | number) {
 }
 export function newbuildcheck(spawnname: string) {
     var milestones: { [extensionAmount: number]: BodyPartConstant[] }
-    if (global.createdunit == 1 || (global.defenseNeeded >= 20 && Memory.fighters.length < 4)) {
+    if (global.createdunit == 1 || (global.defenseNeeded >= 20 && Memory.fighters.length < 4)||(Game.flags.attack!==undefined&& Memory.fighters.length < 4&&Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade>0)) {
         return
     }
     var type = "builder"
@@ -376,7 +376,7 @@ export function newbuildcheck(spawnname: string) {
         if (Memory.isswc) {
             milestones = {
                 20: [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY],
-                30: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY],
+                30: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY],
                 //50: [MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY]
             }
         } else {
@@ -413,20 +413,22 @@ export function newbuildcheck(spawnname: string) {
         allmodules = global.cache[spawnname + "Ucache" + type].modules
         buildercost = global.cache[spawnname + "Ucache" + type].cost
     }
+    let needTypeBool = Game.spawns[spawnname].room.memory.buildState.buildInfo.sites.length>0 ? Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0 || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.general === 0
+                    : Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0
     report.formatBasic("debug2", String(Memory.haulerSatisfied))
     Memory.builderlevel = allstores
     let mSpawn: StructureSpawn = Game.spawns[spawnname].room.getMasterSpawn()
     let LRMquad = Memory.longrangemining.length>1 ? Memory.longrangemining.length-2
                 : Memory.longrangemining.length-1
     //@ts-ignore
-    let buildNeedBool = checkbuildwant(spawnname) >= Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length
+    let buildNeedBool = checkbuildwant(spawnname) > Game.spawns[spawnname].room.getMasterSpawn().memory.builders.length
     if (Game.spawns[spawnname].room.energyAvailable >= buildercost && ((Memory.haulers.length>=(Memory.haulerSatisfied-1)
-        &&Memory.longrangemining[LRMquad].creeps.length>0) || Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade === 0)) {
+        &&Memory.longrangemining[LRMquad].creeps.length>0) || needTypeBool)) {
         report.formatBasic("debug","build1")
         if (buildNeedBool) {
             report.formatBasic("debug","build2")
             if ((checkharvwant(spawnname) <= Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length)
-                 || (Game.spawns[spawnname].room.getMasterSpawn().memory.builderallocations.upgrade == 0 && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
+                 || (needTypeBool && Game.spawns[spawnname].room.getMasterSpawn().memory.harvesters.length != 0)) {
                 report.formatBasic("debug","build3")
                 if (Game.spawns[spawnname].spawning == null) {
                     createbuild(spawnname, allmodules)
@@ -539,7 +541,7 @@ export function newhaulercheck(spawnname: string) {
     //if(Memory.isswc) if(Memory.haulerSatisfied>4&&Game.cpu.getUsed()>Game.cpu.limit*0.75) Memory.haulerSatisfied = 4
     if (Memory.isswc) {
         let max = 9
-        if(Game.spawns[spawnname].room.storage) if((Game.spawns[spawnname].room.storage??{store:{"energy":0}}).store[RESOURCE_ENERGY]>100000) max = 7
+        if(Game.spawns[spawnname].room.storage) if((Game.spawns[spawnname].room.storage??{store:{"energy":0}}).store[RESOURCE_ENERGY]>100000) max = 9
             //@ts-ignore
         if (Memory.haulerSatisfied > max && Game.spawns[spawnname].room.controller.level >= 4 && Game.spawns[spawnname].room.controller.level < 7) {
             Memory.haulerSatisfied = max
@@ -574,7 +576,7 @@ export function newhaulercheck(spawnname: string) {
             }
         }
     }
-    let upgrade = 2
+    let upgrade = 1
         //@ts-ignore
     if(Game.spawns[spawnname].room.controller.level>=7) upgrade = 2
     //@ts-ignore
@@ -595,6 +597,7 @@ export function newcombatcheck(spawnname: string) {
     if ((global.createdunit == 1 || (global.defenseNeeded < 20 && (Memory.harass.length === 0||Memory.haulers.length<Memory.haulerSatisfied||(Game.spawns[spawnname].room.controller??{level:0}).level<5))) && Game.flags.attack === undefined) {
         return
     }
+    console.log("BALLS")
     var allstores = Memory.storecache
     var allmodules
     var buildercost
