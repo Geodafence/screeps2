@@ -3,15 +3,23 @@ import { Structure } from "../../../typings/structure";
 export function buildRamparts(pos:Structure) {
         // example call
         let tempPos = pos
-        let tempwalls = floodFillingWalls(tempRoomMaps(tempPos.room.name), 250, tempPos.pos, 2);
+        let tempwalls = floodFillingWalls(tempRoomMaps(tempPos.room.name), 250, tempPos.pos, 0.5);
         let iter = 1
         for(let I of tempwalls) {
             iter += 1;
             iter = iter>3?1:iter
             let loc = new RoomPosition(I[0],I[1],tempPos.room.name);
-            let site = iter==2?STRUCTURE_RAMPART:STRUCTURE_WALL
-            console.log(site)
-            loc.createConstructionSite(site);
+            let E = true
+            for(let i of loc.look()) {
+                if(i.type == LOOK_STRUCTURES || i.type === LOOK_CONSTRUCTION_SITES ) {
+                    E = false
+                 }
+            }
+            if(E) {
+                let site = iter==2?STRUCTURE_RAMPART:STRUCTURE_WALL
+                console.log(site)
+                loc.createConstructionSite(site);
+            }
         }
 }
 

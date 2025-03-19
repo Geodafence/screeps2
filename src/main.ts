@@ -1,6 +1,6 @@
 // Import necessary modules for various roles and functions
 import { run as harvtick } from './roles/role.harvester';
-import { newharvcheck, newbuildcheck, newhaulercheck, newcombatcheck, createqueen, createhauler } from "./handler.newunits";
+import { newharvcheck, newbuildcheck, newhaulercheck, newcombatcheck, createqueen, createhauler, createbuild } from "./handler.newunits";
 import { run as buildertick } from "./roles/role.builder";
 import { run as combattick } from "./roles/role.combat";
 import { tick as harassertick } from "./roles/role.harasser"
@@ -19,7 +19,6 @@ import { checkRampartPassing } from "./structs/structure.rampart"
 
 import "./libs/spawnUtils";
 import { tick as queentick } from "./roles/role.queen";
-import { any, isUndefined } from 'lodash';
 import { run as refillTick } from './roles/role.buildrefill';
 import { ErrorMapper } from "./libs/ErrorMapper";
 import { report } from "./libs/roomReporting"
@@ -29,6 +28,7 @@ import { simpleAllies } from "./libs/allyLibs/simpleAllies"
 import { strengthCalc } from "./libs/combatLibs/calcCreepPower"
 import { buildRamparts } from "./libs/baseBuildingLibs/rampartCalc"
 import { findSuitableRemotes } from "./libs/econLibs/findRemotes"
+import { findClaimRooms } from "./helpers/findsuitableroom"
 // Import typings
 '../typings/creep';
 import { Structure, StructureController, StructureLink, StructureTower } from '../typings/structure';
@@ -135,9 +135,11 @@ if (global.fixticks === undefined) {
 }
 global.methods = {}
 global.methods["createqueen"] = createqueen
+global.methods["createbuilder"] = createbuild
 global.methods["createhauler"] = createhauler
 global.defenseNeeded = 0
 global.updatecache = 100;
+global.printQueue = []
 Memory.isswc = 1
 console.log("restarting loop");
 //var ramparttest = require("rampartcalc")
@@ -171,6 +173,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
     }
     global.LRBmake = 0
     global.LRBroom = 0
+    global.ownedRooms = 0
     let refreshMiningRooms = false
     if(Memory.isswc) {
         if(Game.time%100===0||Memory.miningrooms.length===0) {
@@ -187,6 +190,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
             global.LRBmake = 1
             global.LRBroom = room.name
         }
+
+        if(room.controller.my) {
+            global.ownedRooms += 1
+        }
+
         let currentspawn = room.getMasterSpawn()
         if (currentspawn === undefined || currentspawn === null) {
             continue
@@ -195,6 +203,10 @@ export const loop = ErrorMapper.wrapLoop(() => {
             console.log("Refreshing mining rooms for "+room.name)
             Memory.miningrooms = Memory.miningrooms.concat(findSuitableRemotes(room))
         }
+    }
+    if(Memory.LRBsupport!==undefined) {
+        global.LRBmake = 1
+        global.LRBroom = Memory.LRBsupport
     }
     if (global.LRBroom !== undefined) {
         //Game.map.visual.text("LRB site",new RoomPosition(25,25,global.LRBroom),{stroke:"#0065ff"})
@@ -227,7 +239,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
             else if (room.isNearby(R.room)) replace.push(R)
         }
-        Memory.miningrooms = replace
+        Memory.miningrooms = replace;
         if (currentspawn.memory.harvesters === undefined) {
             currentspawn.memory = {
                 harvesters: [],
@@ -290,7 +302,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
 
         //Note that this is called here to prevent issues with no mining rooms
         // Run the miner code for long-range mining logic
-        remotetick(room);
+        try {
+            remotetick(room);
+        } catch(e) {}
 
         let test = room.find(FIND_STRUCTURES, {
             filter: (structure:Structure) => {
@@ -354,7 +368,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     if(tower.room.storage.store[RESOURCE_ENERGY]<50000) {
                         simpleAllies.requestResource({
                             resourceType:RESOURCE_ENERGY,
-                            priority:0.7,
+                            priority:1,
                             roomName:tower.room.name,
                             amount:70000-tower.room.storage.store[RESOURCE_ENERGY]
                         })
@@ -440,11 +454,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     (spawn.room.getMasterSpawn().memory.queen === undefined && spawn.room.getMasterSpawn().memory.queen2 === undefined && spawn.room.controller.level > 3)) {
                     try {
                         console.log(room.name,"trying to spawn")
-                        if ((spawn.room.getMasterSpawn().memory.queen === undefined && spawn.room.getMasterSpawn().memory.queen2 === undefined && spawn.room.controller.level > 3)) {
+                        if ((Game.flags.attack!==undefined)) {
 
                             newharvcheck(spawn.name);
-                            newbuildcheck(spawn.name);
                             newcombatcheck(spawn.name);
+                            newbuildcheck(spawn.name);
 
                         } else {
 
@@ -480,7 +494,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }*/
        if(Memory.isswc) {
-            if(currentspawn.memory.queue.length < 1&&Memory.scouts.length<5) {
+            if(currentspawn.memory.queue.length < 1&&Memory.scouts.length<5&&currentspawn.memory.harvesters.length>=3) {
                 report.formatBasic("*","scout made")
                 currentspawn.queueAppend(
                     [MOVE],
@@ -518,7 +532,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
         }
         if(Memory.isswc) {
             for(let I of Memory.longrangemining) {
-                if(I.claimer===undefined&&(I.room!==undefined&&I.room!==room.name)&&currentspawn.memory.queue.length < 1&& room.controller.level >= 3 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0) {
+                if(I.claimer===undefined&&(I.room!==undefined&&I.room!==room.name)&&currentspawn.memory.queue.length < 1&& room.controller.level >= 3 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0&&Memory.haulers.length-2>=Memory.haulerSatisfied) {
                     if((global.defenseNeeded < 20 || Memory.fighters.length >= 4)&&Memory.storecache>=20) {
                         currentspawn.queueAppend(
                             (room.controller??{level:0}).level===3?[MOVE,CLAIM]:[MOVE,MOVE,CLAIM,CLAIM],
@@ -530,8 +544,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 }
             }
         }
-        if(Memory.wantToClaim.length>0&&currentspawn.memory.queue.length < 1&& room.controller.level >= 5 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0) {
-            if(getTrueDistance(new RoomPosition(25,25,Memory.wantToClaim[0].room), new RoomPosition(25,25,room.name))<=580&&(global.defenseNeeded < 20 && Memory.fighters.length >= 4)) {
+        if(Memory.wantToClaim.length>0&&currentspawn.memory.queue.length < 1&& room.controller.level >= 5 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0 && (room.storage??{store:{energy:0}}).store[RESOURCE_ENERGY]>100000) {
+            if(getTrueDistance(new RoomPosition(25,25,Memory.wantToClaim[0].room), new RoomPosition(25,25,room.name))<=580&&(global.defenseNeeded < 20 || Memory.fighters.length >= 4)) {
                 if(Memory.wantToClaim[0].override) {
                 } else {
                     currentspawn.queueAppend(
@@ -544,11 +558,12 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 Memory.wantToClaim.shift()
             }
         }
-        if (Memory.longrangemining[Memory.longrangemining.length - 1] !== undefined && global.createdunit === 0) {
+        if (global.createdunit === 0) {
             let LRBspawnin = 2
-            if(Memory.isswc) LRBspawnin = 5
+            if(Memory.isswc) LRBspawnin = 3
             if (global.LRBmake === 1 &&typeof global.LRBroom === "string" && Memory.longRangeBuilders.length < LRBspawnin && currentspawn.memory.queue.length < 1 && room.controller.level >= 5 && Memory.longrangemining[Memory.longrangemining.length - 1].creeps.length !== 0) {
-                if(getTrueDistance(new RoomPosition(25,25,global.LRBroom), new RoomPosition(25,25,room.name))/50<=7&&(global.defenseNeeded < 20 && Memory.fighters.length >= 4)) {
+                console.log("LRB")
+                if(getTrueDistance(new RoomPosition(25,25,global.LRBroom), new RoomPosition(25,25,room.name))<=500&&(global.defenseNeeded < 20 || Memory.fighters.length >= 4)&&(room.storage??{store:{energy:0}}).store[RESOURCE_ENERGY]>20000) {
                     report.formatBasic(room.name, "An LRB was added to the queue")
                     currentspawn.queueAppend(
                         [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
@@ -559,13 +574,24 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
         if(Memory.isswc) {
+            if(Game.time%500===0&&Game.shard.name!=="thunderdrone") {
+                console.log("Refreshing room claim check")
+                findClaimRooms(room)
+            }
+
 
             if(room.memory.buildState===undefined) {
-                if(room.controller.level<=3) {
+                if(room.controller.level<=8) {
                     room.memory.buildState = {
                         autoBuildOn: true,
                         plannedRoads: false,
-                        plannedRamparts: false
+                        plannedRamparts: false,
+                        buildInfo: {
+                            builds: [],
+                            built: [],
+                            sites: [],
+                            confirmed:false
+                        }
                     }
                 }
 
@@ -591,9 +617,13 @@ export const loop = ErrorMapper.wrapLoop(() => {
                             confirmed:false
                         }
                     }
-                    if(room.memory.buildState.plannedRamparts===false&&room.controller.level>=3) {
-                        buildRamparts(currentspawn)
-                        room.memory.buildState.plannedRamparts = true
+                    if(room.memory.buildState.buildInfo.sites===undefined) {
+                        room.memory.buildState.buildInfo={
+                            builds: [],
+                            built: [],
+                            sites: [],
+                            confirmed:false
+                        }
                     }
                     if(Game.time%100===0&&room.memory.buildState.buildInfo.sites.length===0) {
                         room.memory.buildState.buildInfo.builds = []
@@ -602,6 +632,12 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     }
                     if(Game.time%10===0) {
                         createAndUpdateCheckerSite(room.memory.buildState,"buildInfo",currentspawn.name)
+                    }
+                    if(Game.time%50===0) {
+                        if(room.controller.level>=4) {
+                            buildRamparts(currentspawn)
+                            room.memory.buildState.plannedRamparts = true
+                        }
                     }
                 }
             }
@@ -662,7 +698,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
             if (room.terminal !== undefined) {
                 // too much usage rn
-                //terminaltick(room.terminal)
+                terminaltick(room.terminal)
             }
         }
 
@@ -804,21 +840,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
         global.cputrend.splice(0, 1)
     }
     RawMemory.segments[1] = JSON.stringify(stringify)
-    if (Game.cpu.getUsed() < 16) {
-        for (let T in Game.creeps) {
-            let creep = Game.creeps[T]
-            if (creep.memory._move !== undefined) {
-                let poly = [new RoomPosition(creep.pos.x, creep.pos.y, creep.room.name)]
-                for (let path of Room.deserializePath(creep.memory._move.path)) {
-                    poly.push(new RoomPosition(path.x, path.y, creep.room.name))
-                }
-                Game.map.visual.poly(poly, { stroke: '#ffffff', strokeWidth: .8, opacity: .2, lineStyle: 'dashed' })
-            }
-        }
-    }
-    if (Game.cpu.getUsed() >= 20) {
-        report.formatImportant("*", "tf are you doing, you're at the max cpu! (" + Game.cpu.getUsed() + ")");
-    }
+
+    report.formatBasic("*", "Used a total of " + Math.round(Game.cpu.getUsed()) + "/"+Game.cpu.limit+" cpu this tick");
+    report.formatBasic("*", "Have " + Game.cpu.bucket + "/10000 bucket this tick");
     report.flush()
     //console.log("used "+String(new Date().getTime()-cpuNonIntents)+" cpu not including intents")
 });
@@ -826,12 +850,12 @@ export const loop = ErrorMapper.wrapLoop(() => {
 // Function to handle tasks for each harvester
 function harvesterforeach(item: string, spawntype: string) {
     if (item in Game.creeps) {
-        if (Game.creeps[item].room == Game.spawns[spawntype].room) {
+        //if (Game.creeps[item].room == Game.spawns[spawntype].room) {
             // Renew harvester if it's near the end of its lifespan
             //@ts-ignore
-            if (Game.creeps[item].ticksToLive < 1000) {
-                Game.spawns[spawntype].renewCreep(Game.creeps[item]);
-            }
+            //if (Game.creeps[item].ticksToLive < 1000) {
+                //Game.spawns[spawntype].renewCreep(Game.creeps[item]);
+            //}
             // Execute harvester tasks
             if (global.kill == 1) {
                 remove("usedsources", Game.creeps[item])
@@ -839,7 +863,7 @@ function harvesterforeach(item: string, spawntype: string) {
             } else {
                 harvtick(Game.creeps[item]);
             }
-        }
+        //}
     } else {
         // Remove harvester from memory if it no longer exists
         const index = Game.spawns[spawntype].memory.harvesters.indexOf(item);
