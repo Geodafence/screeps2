@@ -10,3 +10,10 @@ if(Game.shard.name==="thunderdrone") {
         "chungus3095"
     ];
 }
+if(Game.shard.name==="jaysee") {
+    Allies = [
+        "Shibdib",
+        "chungus3095",
+        "FY312"
+    ];
+}
