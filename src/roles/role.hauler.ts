@@ -105,7 +105,8 @@ export function tick(creep: Creep) {
                 filter: function (creep: Creep) {
                     (creep.getActiveBodyparts(ATTACK) > 0 || creep.getActiveBodyparts(RANGED_ATTACK) > 0 || creep.getActiveBodyparts(HEAL) > 0)
                 }
-            }).length === 0
+            }).length === 0 &&
+            creep.room.find(FIND_SOURCES).length<3
         ) {
             let goals: Creep | null = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS, {
                 filter: function (creep: Creep) {

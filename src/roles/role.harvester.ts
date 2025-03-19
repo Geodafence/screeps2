@@ -1,3 +1,4 @@
+/* Harvester, nicknamed "Eco Poker" */
 
 import { register as _register, harvest, remove } from "../libs/general.sourceregistering";
 import { filter } from "lodash";
@@ -17,9 +18,12 @@ import { Allies } from "../libs/allyLibs/allyConsts"
             //}
             _register("usedsources", creep)
             let err = harvest(creep)
-            //if(err == ERR_NOT_ENOUGH_RESOURCES) {
-                //creep.moveTo(9,5,{reusePath: 200})
-            //}
+            if(err == ERR_NOT_ENOUGH_RESOURCES) {
+                creep.moveTo(9,5,{reusePath: 200})
+            }
+            if(creep.memory.registeredsource===undefined) {
+                creep.moveTo(9,5,{reusePath: 200})
+            }
             if(creep.store.getFreeCapacity() == 0) creep.memory.state = "storing"
         } else {
             if(creep.store[RESOURCE_ENERGY] == 0) {

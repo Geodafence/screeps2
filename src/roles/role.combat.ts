@@ -1,4 +1,4 @@
-
+/* Blinkies, nicknamed "Fly Swatters" */
 
 import { RoomObject } from "../../typings/room-object";
 import { AnyOwnedStructure, Structure } from "../../typings/structure";
@@ -72,20 +72,20 @@ export function combatCalc(creep:Creep,target:RoomObject,bescared=true) {
     }
     let knownPossible = true
     if(StrCalc.canWinRoom(creep.room)===false&&bescared) {
-        if(creep.pos.x>=50||creep.pos.x<=0||creep.pos.y>=50||creep.pos.y<=0) {
-            creep.moveTo(new RoomPosition(25,25,creep.room.name))
-            return
-        }
+        //if(creep.pos.x>=50||creep.pos.x<=0||creep.pos.y>=50||creep.pos.y<=0) {
+            //creep.moveTo(new RoomPosition(25,25,creep.room.name))
+            //return
+        //}
         creep.moveByPath(flee(creep,target,6))
 
             let alreadyrequested = -1;
-            for (let temp in Memory.triorequests) {
-                if (Memory.triorequests[temp].roomName == creep.room.name) {
+            for (let temp in Memory.defenserequests) {
+                if (Memory.defenserequests[temp].roomName == creep.room.name) {
                     alreadyrequested = 1;
                 }
             }
             if (alreadyrequested == -1&&(creep.room.controller?.level??0)<1) {
-                Memory.triorequests.push(creep.pos);
+                Memory.defenserequests.push(creep.pos);
             }
         knownPossible = false
     }

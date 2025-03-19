@@ -1,3 +1,5 @@
+/* Harassers, nicknamed "Assholes" */
+
 import { Allies } from "../libs/allyLibs/allyConsts"
 import { combatCalc } from "./role.combat"
 export function tick(creep: Creep) {
