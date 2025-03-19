@@ -10,11 +10,11 @@ export function respondToDefenseRequests(room:Room) {
     for (const request of defenseRequests) {
 
         if(request===null) continue
-
+        console.log(JSON.stringify(request))
         let start = new RoomPosition(25,25,room.name)
         let roomPos = new RoomPosition(25,25,request.roomName)
         if(getTrueDistance(start,roomPos)/50<=8) {
-            if(request.priority<=0.3) {
+            if(request.priority<=0.3||(room.controller??{level:0}).level<6) {
                 let alreadyrequested = -1;
                 for (let temp in Memory.defenserequests) {
                     if (Memory.defenserequests[temp].room == request.roomName) {
@@ -24,7 +24,7 @@ export function respondToDefenseRequests(room:Room) {
                 if (alreadyrequested == -1) {
                     Memory.defenserequests.push({ x: 25, y: 25, room: request.roomName });
                 }
-                global.defenseNeeded = 40;
+                global.defenseNeeded = 25;
             } else {
                 let alreadyrequested = -1;
                 for (let temp in Memory.triorequests) {
