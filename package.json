@@ -15,6 +15,7 @@
     "push-sim": "rollup -c --environment DEST:sim",
     "push-personal": "rollup -c --environment DEST:personal",
     "push-newbieland": "rollup -c --environment DEST:newbieland",
+    "push-sandbox": "rollup -c --environment DEST:sandbox",
     "test": "npm run test-unit",
     "test-unit": "mocha test/unit/**/*.js",
     "test-integration": "echo 'See docs/in-depth/testing.md for instructions on enabling integration tests'",
