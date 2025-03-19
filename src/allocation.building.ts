@@ -29,7 +29,14 @@ import { ConstructionSite } from "../typings/construction-site";
         // If the creep is in building mode
         if(creep.memory.state) {
             // Find construction sites in the room
+            let find = creep.room.find(FIND_CONSTRUCTION_SITES);
+            find.sort((a,b)=>Number(b.structureType===STRUCTURE_STORAGE)-Number(a.structureType===STRUCTURE_STORAGE))
             let targets = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES);
+            if(find.length>0) {
+                if(find[0].structureType===STRUCTURE_STORAGE) {
+                    targets = find[0]
+                }
+            }
             let emergancyrepair = creep.room.find(FIND_STRUCTURES,{filter: (struct: Structure) => struct.hits < struct.hitsMax*0.25&&struct.structureType!==STRUCTURE_RAMPART&&struct.structureType!==STRUCTURE_WALL})
             // If construction sites are available, build at the nearest site
             if(targets&&emergancyrepair.length===0) {
@@ -69,8 +76,6 @@ import { ConstructionSite } from "../typings/construction-site";
                 }
             }
         } else {
-            // no clue why this is erroring
-            //@ts-ignore
 			let targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType == STRUCTURE_STORAGE && structure.store[RESOURCE_ENERGY] > 100000) ||
@@ -79,12 +84,22 @@ import { ConstructionSite } from "../typings/construction-site";
                 }
         	});
 			if(targets.length > 0) {
-                //@ts-ignore
                 let trytest = creep.withdraw(targets[0],RESOURCE_ENERGY)
             	if(trytest == ERR_NOT_IN_RANGE) {
                 	creep.moveTo(targets[0],{reusePath: 10})
                 }
 			} else {
+                let targets = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+                    filter: (res) => {
+                        return res.resourceType===RESOURCE_ENERGY
+                    }
+                });
+                if(targets) {
+                    let trytest = creep.pickup(targets)
+                    if(trytest == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(targets,{reusePath: 10})
+                    }
+                }
 				// Register the creep to a source if not already registered
 				if(creep.memory.registeredsource == undefined || creep.memory.registeredsource == 0) {
 				    _register("buildersources", creep);
