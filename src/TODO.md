@@ -1,9 +1,13 @@
-FORMATTING TODOS
-add in the idea, priority (1-100), estimated difficulty (1-10), and concept code/ideas (optional)
-1 empty line signals a new idea
+ERRORS
 
-Rewrite Game.getobjectbyid to not use the _Id<> system due to it's bugginess
-Priority 10. Difficulty 4
+Local haulers don't deposit after getting enough energy??? Probably from the better checking system bugging for some reason.
 
-Standarize creep memory
-Priority 30. Difficulty 6
+GOALS
+
+1. Add remote mining.
+- [X] 1A. Add scouting rooms
+- [ ] 1B. Add a task to check for viable remote rooms
+- [ ] 1C. Add remote miners
+- [ ] 1D. Add remote haulers
+- [ ] 1E. Maybe add remote miners placing containers?
+2. Add road planning to controller.

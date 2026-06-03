@@ -10,8 +10,14 @@
     "allowJs": true,
     "checkJs": true,
     "paths": {
-      "./typings/": [
-        "*"
+      "Typings": [
+        "./typings/*"
+      ],
+      "Constants": [
+        "./src/consts/*"
+      ],
+      "Tasks": [
+        "./src/Taskmaster/tasks/*"
       ]
     },
     "strict": true,
