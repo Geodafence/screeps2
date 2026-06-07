@@ -54,14 +54,24 @@ export function buildContainer(allocatedItems: Id<Creep>[], planState: planConst
                 updatedItems: allocatedItems
             }
         }
-        let container = creep.room.find(FIND_CONSTRUCTION_SITES, { filter: (a) => a.structureType === STRUCTURE_CONTAINER })
-        if (container.length === 0) {
-            let constructloc = creep.room.find(FIND_MY_SPAWNS)[0].pos
-            new RoomPosition(constructloc.x, constructloc.y - 1, creep.room.name).createConstructionSite(STRUCTURE_CONTAINER)
+        let container = creep.room.find(FIND_CONSTRUCTION_SITES, {
+            filter: (a) => a.structureType === STRUCTURE_CONTAINER
+        });
+
+        if (container.length === 0 && creep.room.find(FIND_MY_SPAWNS)[0]) {
+            let constructloc = creep.room.find(FIND_MY_SPAWNS)[0].pos;
+            let issite = creep.room.lookForAt(
+                LOOK_STRUCTURES,
+                new RoomPosition(constructloc.x, constructloc.y - 1, creep.room.name)
+            );
+            if(issite.length===0)
+                    new RoomPosition(constructloc.x, constructloc.y - 1, creep.room.name).createConstructionSite(
+                        STRUCTURE_CONTAINER
+                    );
         } else if (creep.build(container[0]) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(container[0])
+            creep.moveTo(container[0]);
         }
-        if (creep.store.getUsedCapacity() !== 0 || creep.room.find(FIND_STRUCTURES, { filter: { structureType: STRUCTURE_CONTAINER } }).length <= 0) {
+        if (creep.store.getUsedCapacity() !== 0 && creep.room.find(FIND_STRUCTURES, { filter: { structureType: STRUCTURE_CONTAINER } }).length <= 0) {
             confirm = false
         }
         iter += 1

@@ -1,6 +1,7 @@
 import { Plan, planConstructor, taskBranch, taskTree } from "./planConstructor";
 import { task, TaskMap, taskReturn } from "./taskdefs";
 import { ConditionMap } from "./ConditionMap";
+
 /** An internal function used to average out cpu usage from previous runs of a task */
 function avg(array: any[]) {
     if (array === undefined) {
@@ -9,7 +10,7 @@ function avg(array: any[]) {
     array = array.length === 0 ? [0] : array
     return array.reduce((a, b) => a + b) / array.length;
 }
-const visuals = false;
+const visuals = true;
 interface Memory {
 
     Taskmaster: {
@@ -85,35 +86,40 @@ export class Taskmaster {
             if (I.fullPlan.allocated.length === 0) {
                 run = null;
             } else if (visuals) {
-                //@ts-ignore
-                if (Game.getObjectById(I.fullPlan.allocated[0]) !== null) {
+                try {
                     //@ts-ignore
-                    let creeps: RoomObject[] = I.fullPlan.allocated.map((I) => Game.getObjectById(I));
-                    let boxstart = new RoomPosition(
-                        Math.min(...creeps.map((I) => I.pos.x)),
-                        Math.min(...creeps.map((I) => I.pos.y)),
-                        creeps[0].room?.name || "W0N0"
-                    );
-                    let boxend = new RoomPosition(
-                        Math.max(...creeps.map((I) => I.pos.x)),
-                        Math.max(...creeps.map((I) => I.pos.y)),
-                        creeps[0].room?.name || "W0N0"
-                    );
-
-                    let boxVisual = new RoomVisual(creeps[0].room?.name || "W0N0").rect(
-                        boxstart.x,
-                        boxstart.y,
-                        boxend.x - boxstart.x,
-                        boxend.y - boxstart.y
-                    );
-                    let textVisual = boxVisual.text(
-                        run?.fullPlan.type + " " + run?.activeTask,
-                        new RoomPosition(
-                            boxend.x - (boxend.x - boxstart.x / 2),
-                            boxend.y + (2 % 50),
+                    if (Game.getObjectById(I.fullPlan.allocated[0]) !== null) {
+                        //@ts-ignore
+                        let creeps: RoomObject[] = I.fullPlan.allocated.map((I) => Game.getObjectById(I));
+                        let boxstart = new RoomPosition(
+                            Math.min(...creeps.map((I) => I.pos.x))-1,
+                            Math.max(...creeps.map((I) => I.pos.y))+1,
                             creeps[0].room?.name || "W0N0"
-                        )
-                    );
+                        );
+                        let boxend = new RoomPosition(
+                            Math.max(...creeps.map((I) => I.pos.x))+1,
+                            Math.min(...creeps.map((I) => I.pos.y))-1,
+                            creeps[0].room?.name || "W0N0"
+                        );
+
+                        let boxVisual = new RoomVisual(creeps[0].room?.name || "W0N0").rect(
+                            boxstart.x % 50,
+                            boxstart.y % 50,
+                            (boxend.x - boxstart.x) % 50,
+                            (boxend.y - boxstart.y) % 50,
+                            { fill: "rgb(255 255 255 / 0)", lineStyle: "dashed", stroke: "#023693", strokeWidth: 0.2, opacity: 0.5 }
+                        );
+                        let textVisual = new RoomVisual(creeps[0].room?.name || "W0N0").text(
+                            run?.fullPlan.type + " " + run?.activeTask,
+                            new RoomPosition(
+                                Math.round((boxend.x + boxstart.x) / 2) % 50,
+                                (boxstart.y + 1) % 50,
+                                creeps[0].room?.name || "W0N0"
+                            )
+                        );
+                    }
+                } catch (e) {
+                    console.log("Visual error "+e)
                 }
             }
             if (run == null) {
@@ -142,7 +148,7 @@ export class Taskmaster {
 
             let confirm = task.requirements instanceof Function ? task.requirements() : task.requirements;
             if (confirm) {
-                tasks.splice(iter);
+                tasks.splice(iter, 1);
                 iter -= 1;
 
                 let tasklist = this.DetermineCheapestPath(task.taskTree, task.allocated, task);

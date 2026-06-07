@@ -59,17 +59,22 @@ export function GrabFromSpawn(allocatedItems: Id<AnyCreep>[] | Id<Structure>[], 
                 suceeded: false,
                 status: "creep doesn't exist",
                 updatedItems: allocatedItems
-            }
+            };
         }
-
+        let container = false;
         if (creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_CONTAINER }).length > 0) {
-            spawn = creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_CONTAINER })[0]
+            spawn = creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_CONTAINER })[0];
+            container = true;
         }
 
         if (creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             creep.moveTo(spawn)
-        }
 
+        }
+        // @ts-ignore
+        if(container&&spawn.store.getUsedCapacity()===0) {
+            creep.moveTo(new RoomPosition(25,25,creep.room.name));
+        }
         if (creep.store.getFreeCapacity() !== 0) {
             confirm = false
         }

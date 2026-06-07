@@ -19,6 +19,7 @@ import {
 } from "Taskmaster/tasks/general/FindAndGetEnergy";
 import { MoveToRoom, ScoutRoom } from "./tasks/general/Travelling";
 import { FindAndUpdateRemotes, GoMineAndDrop } from "./tasks/remoteSpecific/MineAndDrop";
+import { runTowerForever } from "./tasks/buildings/Tower";
 
 export interface taskReturn {
     /**
@@ -150,7 +151,8 @@ export const TaskMap: {
     ContainerNotExistsCondition: ContainerNotExistsCondition,
     GoMineAndDrop: GoMineAndDrop,
     SpawnRemoteFunction: SpawnRemote,
-    FindAndUpdateRemotes: FindAndUpdateRemotes
+    FindAndUpdateRemotes: FindAndUpdateRemotes,
+    runTowerForever: runTowerForever
 };
 // Examples
 interface CreepTaskConstructor extends task {
@@ -337,8 +339,8 @@ export const reverseRoomAndPlanIdTask: CreepTaskConstructor = {
 
     name: "reverseRoomAndPlanId",
 
-    cost: 1,
-}
+    cost: 1
+};
 export const SpawnRemoteHaulerTask: CreepTaskConstructor = {
     condition: "AlwaysTrueCondition",
 
@@ -346,3 +348,10 @@ export const SpawnRemoteHaulerTask: CreepTaskConstructor = {
 
     cost: 3
 };
+export const runTowerForeverTask: CreepTaskConstructor = {
+    condition: "AlwaysTrueCondition",
+
+    name: "runTowerForever",
+
+    cost: 1
+}

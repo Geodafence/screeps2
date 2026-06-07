@@ -11,7 +11,7 @@ interface scoutMemory {
      /**
      * All creeps in the room
       *
-      * This info goes stale incredibly quickly and is NOT RECCOMENDED FOR USE
+      * This info goes stale incredibly quickly and is NOT RECOMMENDED FOR USE
      */
      creeps: RoomPosition[];
       /**
@@ -126,6 +126,8 @@ export function MoveToRoom(allocatedItems: Id<Creep>[], planState: GoRemoteMineC
         });
         if (creep.room.name !== roomname || creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 14) === false) {
             creep.moveTo(new RoomPosition(25, 25, roomname));
+        }
+        if(creep.room.name !== roomname || !creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 20)) {
             confirm = false;
         }
 

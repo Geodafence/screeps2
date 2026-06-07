@@ -1,13 +1,25 @@
 import { Misc } from "consts/MiscConsts"
 import { Taskmaster } from "./Taskmaster/main"
-import { CreateFindandUpdateRemotesPlan, CreateGoBuildPlan, CreateGoHarvestPlan, CreateGoHaulPlan, CreateGoRemoteMinePlan, CreateGoScoutPlan, CreateGoUpgradePlan, CreateSpawnHarvesterPlan, CreateSpawnHaulerPlan } from "./Taskmaster/plans"
-import { buildOrder, creepLimits, globalBuildOrder } from "consts/EcoConsts"
+import {
+    CreateFindandUpdateRemotesPlan,
+    CreateGoBuildPlan,
+    CreateGoHarvestPlan,
+    CreateGoHaulPlan,
+    CreateGoRemoteMinePlan,
+    CreateGoScoutPlan,
+    CreateGoUpgradePlan,
+    CreateRunTowerTask,
+    CreateSpawnHarvesterPlan,
+    CreateSpawnHaulerPlan
+} from "./Taskmaster/plans";
+import { buildOrder, creepLimits, getCreepLimit, globalBuildOrder } from "consts/EcoConsts"
 import "functions/list";
 import { getTrueDistance, SayAll } from "functions/misc";
-import { createAndUpdateCheckerSite } from "classes/checkerboardBuilder"
+import { createAndUpdateCheckerSite } from "./imports/checkerboardBuilder"
 import { bodyConsts } from "consts/BodyConsts"
-import { ErrorMapper } from "ErrorMapper"
-
+import { ErrorMapper } from "ErrorMapper";
+// main.js
+//import * as trafficManager from "./imports/TrafficManager";
 declare global {
     var taskmaster: Taskmaster
 }
@@ -21,32 +33,33 @@ if(Memory.roomData===undefined) {
 export const loop = ErrorMapper.wrapLoop(() => {
     if(Memory.deferCreepGrab!==undefined) {
         for(let grab of Memory.deferCreepGrab) {
-            if(Game.creeps[grab.name]!=undefined) {
-                switch(grab.type) {
+            if (Game.creeps[grab.name] !== undefined) {
+                switch (grab.type) {
                     case "harvester":
-                        Memory.rooms[grab.roomName].creeps.harvesters.all.push(Game.creeps[grab.name].id)
-                    break
+                        Memory.rooms[grab.roomName].creeps.harvesters.all.push(Game.creeps[grab.name].id);
+                        break;
                     case "hauler":
-                        Memory.rooms[grab.roomName].creeps.haulers.all.push(Game.creeps[grab.name].id)
-                    break
+                        Memory.rooms[grab.roomName].creeps.haulers.all.push(Game.creeps[grab.name].id);
+                        break;
                     case "upgrader":
-                        Memory.rooms[grab.roomName].creeps.upgraders.all.push(Game.creeps[grab.name].id)
-                    break
+                        Memory.rooms[grab.roomName].creeps.upgraders.all.push(Game.creeps[grab.name].id);
+                        break;
                     case "builder":
-                        Memory.rooms[grab.roomName].creeps.builders.all.push(Game.creeps[grab.name].id)
-                    break
+                        Memory.rooms[grab.roomName].creeps.builders.all.push(Game.creeps[grab.name].id);
+                        break;
                     case "scout":
-                        Memory.global.creeps.scouts.all.push(Game.creeps[grab.name].id)
-                    break
+                        Memory.global.creeps.scouts.all.push(Game.creeps[grab.name].id);
+                        break;
                     case "remote":
-                        Memory.rooms[grab.roomName].creeps.remoteminers.all.push(Game.creeps[grab.name].id)
-                    break
+                        Memory.rooms[grab.roomName].creeps.remoteminers.all.push(Game.creeps[grab.name].id);
+                        break;
                     case "remotehauler":
-                        Memory.rooms[grab.roomName].creeps.remotehaulers.all.push(Game.creeps[grab.name].id)
-                        break
+                        Memory.rooms[grab.roomName].creeps.remotehaulers.all.push(Game.creeps[grab.name].id);
+                        break;
                 }
-                Memory.deferCreepGrab.splice(Memory.deferCreepGrab.indexOf(grab),1)
             }
+            Memory.deferCreepGrab.splice(Memory.deferCreepGrab.indexOf(grab), 1);
+            break;
         }
     }
     if(Memory.global.creeps===undefined) {
@@ -57,11 +70,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
     console.log(InternalCalcBodySize(Game.spawns["Spawn1"],bodyConsts.hauler),InternalGetBodyCost(Game.spawns["Spawn1"]))
     global.taskmaster = new Taskmaster(20)
     for(let roomid in Game.rooms) {
-        let room = Game.rooms[roomid]
-        if(room.controller?.level===0 || room.controller?.level === undefined || room.controller.my===false)
-            continue
-        if(room.memory.init!==true) {
-            console.log("init")
+        let room = Game.rooms[roomid];
+        if (room.controller?.level === 0 || room.controller?.level === undefined || room.controller.my === false)
+            continue;
+        if (room.memory.init !== true) {
+            console.log("init");
             room.memory = {
                 creeps: {
                     harvesters: {
@@ -90,69 +103,73 @@ export const loop = ErrorMapper.wrapLoop(() => {
                     }
                 },
                 AllocatedRooms: [],
-                buildInfo: {builds: [],sites: [],built: [], confirmed: false},
+                buildInfo: { builds: [], sites: [], built: [], confirmed: false },
                 init: true
-            }
-
+            };
         }
-        let Spawn = room.find(FIND_MY_SPAWNS)[0]
+        let Spawn = room.find(FIND_MY_SPAWNS)[0];
+        let towers: StructureTower[] = room.find(FIND_STRUCTURES, {
+            filter: (x) => x.structureType === STRUCTURE_TOWER
+        });
 
-        for(let pointer in room.memory.creeps) {
-            room.memory.creeps[pointer] = room.memory.creeps[pointer] || {all: [], closed: []}
-            let arr = room.memory.creeps[pointer]
-            let creeplist = arr.closed
-            let creeplistall = arr.all
-            for(let creep of creeplistall) {
-                let exists = Game.getObjectById(creep)
-                if(!exists||exists?.hits<=0) {
+        for (let pointer in room.memory.creeps) {
+            room.memory.creeps[pointer] = room.memory.creeps[pointer] || { all: [], closed: [] };
+            let arr = room.memory.creeps[pointer];
+            let creeplist = arr.closed;
+            let creeplistall = arr.all;
+            for (let creep of creeplistall) {
+                let exists = Game.getObjectById(creep);
+                if (!exists || exists?.hits <= 0) {
                     creeplistall = creeplistall.removeItemOnce(creep);
                     creeplist = creeplist.removeItemOnce(creep);
                 }
             }
-            if(pointer==="remoteminers"||pointer==="remotehaulers") {
-                console.log("Uh oh")
-                continue
+            if (pointer === "remoteminers" || pointer === "remotehaulers") {
+                console.log("Uh oh");
+                continue;
             }
-            for(let creep of creeplist) {
-                if(taskmaster.ContainsPlan(undefined,undefined,[creep])===false) {
-                    creeplist = creeplist.removeItemOnce(creep)
+            for (let creep of creeplist) {
+                if (taskmaster.ContainsPlan(undefined, undefined, [creep]) === false) {
+                    creeplist = creeplist.removeItemOnce(creep);
                 }
             }
         }
-        let madeCreep = false
-        for(let curOrder of buildOrder) {
-            if(curOrder.planFunction===null) {
+        let madeCreep = false;
+        for (let curOrder of buildOrder) {
+            if (curOrder.planFunction === null) {
                 continue;
             }
-            if(curOrder.planSkipCondition) {
-                if(curOrder.planSkipCondition(room)) continue
+            if (curOrder.planSkipCondition) {
+                if (curOrder.planSkipCondition(room)) continue;
             }
-            console.log(taskmaster.ContainsPlan(curOrder.planName)+" for "+curOrder.planName)
-            if(room.memory.creeps[curOrder.pointer].all.length<creepLimits[curOrder.pointer]&&
-                taskmaster.ContainsPlan(curOrder.planName)===false
+            console.log(taskmaster.ContainsPlan(curOrder.planName) + " for " + curOrder.planName);
+            if (
+                room.memory.creeps[curOrder.pointer].all.length < getCreepLimit(room, curOrder.pointer) &&
+                taskmaster.ContainsPlan(curOrder.planName) === false
             ) {
-                console.log("creating a "+curOrder.planName)
-                taskmaster.AppendPlan(curOrder.planFunction(room))
+                console.log("creating a " + curOrder.planName);
+                taskmaster.AppendPlan(curOrder.planFunction(room));
             }
-            if(room.memory.creeps[curOrder.pointer].all.length<creepLimits[curOrder.pointer]) {
-                madeCreep = true
+            if (room.memory.creeps[curOrder.pointer].all.length < getCreepLimit(room, curOrder.pointer)) {
+                madeCreep = true;
                 break;
             }
         }
-        if(madeCreep===false) {
-            for(let curOrder of globalBuildOrder) {
-                if(curOrder.planFunction===null) {
+        if (madeCreep === false) {
+            for (let curOrder of globalBuildOrder) {
+                if (curOrder.planFunction === null) {
                     continue;
                 }
-                if(curOrder.planSkipCondition) {
-                    if(curOrder.planSkipCondition(room)) continue
+                if (curOrder.planSkipCondition) {
+                    if (curOrder.planSkipCondition(room)) continue;
                 }
-                if(Memory.global.creeps[curOrder.pointer].all.length<creepLimits[curOrder.pointer]&&
-                    taskmaster.ContainsPlan(curOrder.planName)===false
+                if (
+                    Memory.global.creeps[curOrder.pointer].all.length < getCreepLimit(room, curOrder.pointer) &&
+                    taskmaster.ContainsPlan(curOrder.planName) === false
                 ) {
-                    taskmaster.AppendPlan(curOrder.planFunction(room))
+                    taskmaster.AppendPlan(curOrder.planFunction(room));
                 }
-                if(Memory.global.creeps[curOrder.pointer].all.length<creepLimits[curOrder.pointer]) {
+                if (Memory.global.creeps[curOrder.pointer].all.length < getCreepLimit(room, curOrder.pointer)) {
                     break;
                 }
             }
@@ -172,33 +189,97 @@ export const loop = ErrorMapper.wrapLoop(() => {
             taskmaster.AppendPlan(CreateSpawnHaulerPlan(room))
         }
         */
-        if(taskmaster.ContainsInactivePlan("goHaul")===false&&room.memory.creeps.haulers.all.length>room.memory.creeps.haulers.closed.length
-        && room.find(FIND_DROPPED_RESOURCES).length>0) {
-            let creep = room.memory.creeps.haulers.all.filter((a)=>room.memory.creeps.haulers.closed.includes(a)===false&&Game.getObjectById(a).spawning===false)
-            if(creep.length>0) {
-                room.memory.creeps.haulers.closed.push(Game.getObjectById(creep[0]).id)
-                taskmaster.AppendPlan(CreateGoHaulPlan(Game.spawns["Spawn1"].room.name,Game.getObjectById(creep[0])));
+
+        if (
+            taskmaster.ContainsInactivePlan("goHaul") === false &&
+            room.memory.creeps.haulers.all.length > room.memory.creeps.haulers.closed.length &&
+            room.find(FIND_DROPPED_RESOURCES).length > 0
+        ) {
+            let creeplist = room.memory.creeps.haulers.all.filter(
+                (a) =>
+                    room.memory.creeps.haulers.closed.includes(a) === false && Game.getObjectById(a).spawning === false
+            );
+            if (creeplist.length > 0) {
+                for (let creep of creeplist) {
+                    if (Game.getObjectById(creep) !== undefined)
+                        if (taskmaster.ContainsPlan(undefined, undefined, [creep]) === false) {
+                            room.memory.creeps.haulers.closed.push(Game.getObjectById(creep).id);
+                            taskmaster.AppendPlan(
+                                CreateGoHaulPlan(Game.spawns["Spawn1"].room.name, Game.getObjectById(creep))
+                            );
+                        }
+                }
             }
         }
-        if(taskmaster.ContainsInactivePlan("goHarvest")===false&&room.memory.creeps.harvesters.all.length>room.memory.creeps.harvesters.closed.length) {
-            let creep = room.memory.creeps.harvesters.all.filter((a)=>room.memory.creeps.harvesters.closed.includes(a)===false&&Game.getObjectById(a).spawning===false)
-            if(creep.length>0) {
-                room.memory.creeps.harvesters.closed.push(Game.getObjectById(creep[0]).id)
-                taskmaster.AppendPlan(CreateGoHarvestPlan(Game.spawns["Spawn1"].room.name,Game.getObjectById(creep[0])))
+
+        if (
+            taskmaster.ContainsInactivePlan("goHarvest") === false &&
+            room.memory.creeps.harvesters.all.length > room.memory.creeps.harvesters.closed.length
+        ) {
+            let creeplist = room.memory.creeps.harvesters.all.filter(
+                (a) =>
+                    room.memory.creeps.harvesters.closed.includes(a) === false &&
+                    Game.getObjectById(a).spawning === false
+            );
+            if (creeplist.length > 0) {
+                for (let creep of creeplist) {
+                    if (Game.getObjectById(creep) !== undefined)
+                        if (taskmaster.ContainsPlan(undefined, undefined, [creep]) === false) {
+                            room.memory.creeps.harvesters.closed.push(Game.getObjectById(creep).id);
+                            taskmaster.AppendPlan(
+                                CreateGoHarvestPlan(Game.spawns["Spawn1"].room.name, Game.getObjectById(creep))
+                            );
+                        }
+                }
             }
         }
-        if(taskmaster.ContainsInactivePlan("goUpgrade")===false&&room.memory.creeps.upgraders.all.length>room.memory.creeps.upgraders.closed.length) {
-            let creep = room.memory.creeps.upgraders.all.filter((a)=>room.memory.creeps.upgraders.closed.includes(a)===false&&Game.getObjectById(a).spawning===false)
-            if(creep.length>0) {
-                room.memory.creeps.upgraders.closed.push(Game.getObjectById(creep[0]).id)
-                taskmaster.AppendPlan(CreateGoUpgradePlan(Game.spawns["Spawn1"].room.name,Game.getObjectById(creep[0])))
+
+        if (
+            taskmaster.ContainsInactivePlan("goUpgrade") === false &&
+            room.memory.creeps.upgraders.all.length > room.memory.creeps.upgraders.closed.length
+        ) {
+            let creeplist = room.memory.creeps.upgraders.all.filter(
+                (a) =>
+                    room.memory.creeps.upgraders.closed.includes(a) === false &&
+                    Game.getObjectById(a).spawning === false
+            );
+            if (creeplist.length > 0) {
+                for (let creep of creeplist) {
+                    if (Game.getObjectById(creep) !== undefined)
+                        if (taskmaster.ContainsPlan(undefined, undefined, [creep]) === false) {
+                            room.memory.creeps.upgraders.closed.push(Game.getObjectById(creep).id);
+                            taskmaster.AppendPlan(
+                                CreateGoUpgradePlan(Game.spawns["Spawn1"].room.name, Game.getObjectById(creep))
+                            );
+                        }
+                }
             }
         }
-        if(taskmaster.ContainsInactivePlan("goBuild")===false&&room.memory.creeps.builders.all.length>room.memory.creeps.builders.closed.length) {
-            let creep = room.memory.creeps.builders.all.filter((a)=>room.memory.creeps.builders.closed.includes(a)===false&&Game.getObjectById(a).spawning===false)
-            if(creep.length>0) {
-                room.memory.creeps.builders.closed.push(Game.getObjectById(creep[0]).id)
-                taskmaster.AppendPlan(CreateGoBuildPlan(Game.spawns["Spawn1"].room.name,Game.getObjectById(creep[0])))
+
+        if (
+            taskmaster.ContainsInactivePlan("goBuild") === false &&
+            room.memory.creeps.builders.all.length > room.memory.creeps.builders.closed.length
+        ) {
+            let creeplist = room.memory.creeps.builders.all.filter(
+                (a) =>
+                    room.memory.creeps.builders.closed.includes(a) === false && Game.getObjectById(a).spawning === false
+            );
+            if (creeplist.length > 0) {
+                for (let creep of creeplist) {
+                    if (Game.getObjectById(creep) !== undefined)
+                        if (taskmaster.ContainsPlan(undefined, undefined, [creep]) === false) {
+                            room.memory.creeps.builders.closed.push(Game.getObjectById(creep).id);
+                            taskmaster.AppendPlan(
+                                CreateGoBuildPlan(Game.spawns["Spawn1"].room.name, Game.getObjectById(creep))
+                            );
+                        }
+                }
+            }
+        }
+
+        for (let tower of towers) {
+            if (taskmaster.ContainsPlan("TowerImmortalTask", undefined, [tower.id]) === false) {
+                taskmaster.AppendPlan(CreateRunTowerTask(tower, room));
             }
         }
 
@@ -206,45 +287,57 @@ export const loop = ErrorMapper.wrapLoop(() => {
             taskmaster.AppendPlan(CreateFindandUpdateRemotesPlan(Game.spawns["Spawn1"].room));
         }
 
-        if(Game.time%20===0) {
-            createAndUpdateCheckerSite(room.memory,"buildInfo",Spawn.name)
+        if (Game.time % 20 === 0) {
+            createAndUpdateCheckerSite(room.memory, "buildInfo", Spawn.name);
         }
         //if(taskmaster.ContainsActivePlan("GoUpgrade")===false&&taskmaster.ContainsInactivePlan("GoUpgrade")===false)
-            //taskmaster.AppendPlan(CreateGoUpgradePlan(Game.spawns["Spawn1"].room.name,Game.creeps["upgrade"]))
-        let allcreeps = room.memory.creeps.harvesters.all.concat(room.memory.creeps.haulers.all)
-        let actualcreeps:Array<Creep|null> = allcreeps.map((a)=>Game.getObjectById(a))
-        if(actualcreeps.length>0&&!actualcreeps.includes(null))
+        //taskmaster.AppendPlan(CreateGoUpgradePlan(Game.spawns["Spawn1"].room.name,Game.creeps["upgrade"]))
+        let allcreeps = room.memory.creeps.harvesters.all.concat(room.memory.creeps.haulers.all);
+        let actualcreeps: Array<Creep | null> = allcreeps.map((a) => Game.getObjectById(a));
+        if (actualcreeps.length > 0 && !actualcreeps.includes(null))
             // @ts-expect-error
-            SayAll(actualcreeps)
+            SayAll(actualcreeps);
     }
 
     // Global Creep Actions (Ones not working for a specific room)
 
-    if(taskmaster.ContainsInactivePlan("goScout")===false&&Memory.global.creeps.scouts.all.length>Memory.global.creeps.scouts.closed.length) {
-        let creep = Memory.global.creeps.scouts.all.filter((a)=>Memory.global.creeps.scouts.closed.includes(a)===false&&Game.getObjectById(a).spawning===false)
-        if(creep.length>0) {
-            Memory.global.creeps.scouts.closed.push(Game.getObjectById(creep[0]).id)
-            taskmaster.AppendPlan(CreateGoScoutPlan(Game.getObjectById(creep[0])))
-        }
-    }
-    for(let pointer in Memory.global.creeps) {
-        let arr = Memory.global.creeps[pointer]
-        let creeplist = arr.closed
-        let creeplistall = arr.all
-        for(let creep of creeplistall) {
-            let exists = Game.getObjectById(creep)
-            if(!exists||exists?.hits<=0) {
+
+    for (let pointer in Memory.global.creeps) {
+        let arr = Memory.global.creeps[pointer];
+        let creeplist = arr.closed;
+        let creeplistall = arr.all;
+        for (let creep of creeplistall) {
+            let exists = Game.getObjectById(creep);
+            if (!exists || exists?.hits <= 0) {
                 creeplistall = creeplistall.removeItemOnce(creep);
                 creeplist = creeplist.removeItemOnce(creep);
             }
         }
-        for(let creep of creeplist) {
-            if(taskmaster.ContainsPlan(undefined,undefined,[creep])===false) {
-                creeplist = creeplist.removeItemOnce(creep)
+        for (let creep of creeplist) {
+            if (taskmaster.ContainsPlan(undefined, undefined, [creep]) === false) {
+                creeplist = creeplist.removeItemOnce(creep);
             }
         }
     }
 
+    if (
+        taskmaster.ContainsInactivePlan("goScout") === false &&
+        Memory.global.creeps.scouts.all.length > Memory.global.creeps.scouts.closed.length
+    ) {
+        let creep = Memory.global.creeps.scouts.all.filter(
+            (a) => Memory.global.creeps.scouts.closed.includes(a) === false && Game.getObjectById(a).spawning === false
+        );
+        if (creep.length > 0) {
+            Memory.global.creeps.scouts.closed.push(Game.getObjectById(creep[0]).id);
+            taskmaster.AppendPlan(CreateGoScoutPlan(Game.getObjectById(creep[0])));
+        }
+    }
+
+    for(let creep in Memory.creeps) {
+        if(!Game.creeps[creep]){
+            delete Memory.creeps[creep];
+        }
+    }
     taskmaster.run()
 })
 function InternalCalcBodySize(spawn:StructureSpawn,bodydict:{[num:number]:BodyPartConstant[]}):BodyPartConstant[] {

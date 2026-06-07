@@ -1,4 +1,4 @@
-import { creepLimits } from "consts/EcoConsts"
+import { creepLimits, getCreepLimit } from "consts/EcoConsts"
 import { FindUpdateRemotesConstructor, GoHarvestConstructor, GoHaulConstructor, GoRemoteMineConstructor, GoScoutConstructor, GoUpgradeConstructor, planConstructor, SpawnCreepConstructor } from "./planConstructor"
 import {
     dropItemsTask,
@@ -23,7 +23,7 @@ import {
     FindAndUpdateRemotesTask,
     RemoteGrabFromDroppedResourceTask,
     reverseRoomAndPlanIdTask,
-    SpawnRemoteHaulerTask
+    SpawnRemoteHaulerTask, runTowerForeverTask
 } from "./taskdefs";
 
 
@@ -167,7 +167,7 @@ export function CreateSpawnHarvesterPlan(room: Room): SpawnCreepConstructor {
     priority: 5,
 
     // Requirements before task can be met
-    requirements: (room !== undefined&&room.memory.creeps.harvesters.all.length<creepLimits.harvesters),
+    requirements: (room !== undefined&&room.memory.creeps.harvesters.all.length<getCreepLimit(room,"harvesters")),
 
     targetId: room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id,
 
@@ -190,99 +190,90 @@ export function CreateSpawnHarvesterPlan(room: Room): SpawnCreepConstructor {
 export function CreateSpawnUpgraderPlan(room: Room): SpawnCreepConstructor {
   let compilerdumb = room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id
   let plan = {
+      // Type of task
+      type: "SpawnUpgrader",
 
-    // Type of task
-    type: "SpawnUpgrader",
+      // Room name of task
+      roomName: room.name,
 
-    // Room name of task
-    roomName: room.name,
+      // Priority of task
+      priority: 5,
 
-    // Priority of task
-    priority: 5,
+      // Requirements before task can be met
+      requirements: room !== undefined && room.memory.creeps.upgraders.all.length < getCreepLimit(room, "upgraders"),
 
-    // Requirements before task can be met
-    requirements: (room !== undefined&&room.memory.creeps.upgraders.all.length<creepLimits.upgraders),
+      targetId: room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id,
 
-    targetId: room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id,
+      allocated: [compilerdumb],
 
-    allocated: [compilerdumb],
-
-
-    taskTree: {
-      // Possible children to be called
-      // Possible child 1
-      SpawnUpgraderChild: {
-        info: SpawnUpgraderTask,
-      },
-
-    },
-  }
+      taskTree: {
+          // Possible children to be called
+          // Possible child 1
+          SpawnUpgraderChild: {
+              info: SpawnUpgraderTask
+          }
+      }
+  };
   //@ts-ignore
   return plan
 }
 export function CreateSpawnBuilderPlan(room: Room): SpawnCreepConstructor {
   let compilerdumb = room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id
   let plan = {
+      // Type of task
+      type: "SpawnBuilder",
 
-    // Type of task
-    type: "SpawnBuilder",
+      // Room name of task
+      roomName: room.name,
 
-    // Room name of task
-    roomName: room.name,
+      // Priority of task
+      priority: 5,
 
-    // Priority of task
-    priority: 5,
+      // Requirements before task can be met
+      requirements: room !== undefined && room.memory.creeps.builders.all.length < getCreepLimit(room, "builders"),
 
-    // Requirements before task can be met
-    requirements: (room !== undefined&&room.memory.creeps.builders.all.length<creepLimits.builders),
+      targetId: room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id,
 
-    targetId: room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id,
+      allocated: [compilerdumb],
 
-    allocated: [compilerdumb],
-
-
-    taskTree: {
-      // Possible children to be called
-      // Possible child 1
-      SpawnBuilderChild: {
-        info: SpawnBuilderTask,
-      },
-
-    },
-  }
+      taskTree: {
+          // Possible children to be called
+          // Possible child 1
+          SpawnBuilderChild: {
+              info: SpawnBuilderTask
+          }
+      }
+  };
   //@ts-ignore
   return plan
 }
 export function CreateSpawnHaulerPlan(room: Room): SpawnCreepConstructor {
   let compilerdumb = room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id
   let plan = {
+      // Type of task
+      type: "SpawnHauler",
 
-    // Type of task
-    type: "SpawnHauler",
+      // Room name of task
+      roomName: room.name,
 
-    // Room name of task
-    roomName: room.name,
+      // Priority of task
+      priority: 5,
 
-    // Priority of task
-    priority: 5,
+      // Requirements before task can be met
+      requirements: room !== undefined && room.memory.creeps.haulers.all.length < getCreepLimit(room, "haulers"),
 
-    // Requirements before task can be met
-    requirements: (room !== undefined&&room.memory.creeps.haulers.all.length<creepLimits.haulers),
+      targetId: room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id,
 
-    targetId: room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id,
+      allocated: [compilerdumb],
 
-    allocated: [compilerdumb],
-
-
-    taskTree: {
-      // Possible children to be called
-      // Possible child 1
-      SpawnHaulerChild: {
-        info: SpawnHaulerTask,
-      },
-
-    },
-  }
+      taskTree: {
+          // Possible children to be called
+          // Possible child 1
+          SpawnHaulerChild: {
+              info: SpawnHaulerTask
+          }
+      }
+  };
   //@ts-ignore
   return plan
 }
@@ -437,71 +428,68 @@ export function CreateSpawnHaulerPlan(room: Room): SpawnCreepConstructor {
     return plan
   }
   export function CreateGoScoutPlan(creep: Creep): GoScoutConstructor {
-    let plan = {
+      let plan = {
+          // Type of task
+          type: "goScout",
 
-      // Type of task
-      type: "goScout",
+          // Room name of task
 
-      // Room name of task
+          // Priority of task
+          priority: 3,
 
-      // Priority of task
-      priority: 3,
+          // Requirements before task can be met
+          requirements: creep !== undefined,
 
-      // Requirements before task can be met
-      requirements: (creep !== undefined),
+          // Cancels the task if any of the allocated creeps die to prevent errors
+          cancelCondition: "anyTargetDiedCondition",
 
-      // Cancels the task if any of the allocated creeps die to prevent errors
-      cancelCondition: "anyTargetDiedCondition",
+          // Id of target of this task (eg: a source)
+          targetId: {},
 
-      // Id of target of this task (eg: a source)
-      targetId: {},
+          // Ids of creeps or structures that are allocated to this task
+          allocated: [creep.id],
 
-      // Ids of creeps or structures that are allocated to this task
-      allocated: [creep.id],
-
-      taskTree: {
-        GoScout: {
-          info: GoScoutTask
-          // A closedlistremoval task wasn't included here because that is built for tasks specific to a single room. An automatic removefromlist system in main.ts is being used instead.
-        }
-      },
-    }
-    return plan
+          taskTree: {
+              GoScout: {
+                  info: GoScoutTask
+                  // A closedlistremoval task wasn't included here because that is built for tasks specific to a single room. An automatic removefromlist system in main.ts is being used instead.
+              }
+          }
+      };
+      return plan;
   }
-export function CreateSpawnScoutPlan(room: Room): SpawnCreepConstructor {
-  let compilerdumb = room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id
-  let plan = {
+  export function CreateSpawnScoutPlan(room: Room): SpawnCreepConstructor {
+      let compilerdumb = room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id;
+      let plan = {
+          // Type of task
+          type: "SpawnScout",
 
-    // Type of task
-    type: "SpawnScout",
+          // Room name of task
+          roomName: room.name,
 
-    // Room name of task
-    roomName: room.name,
+          // Priority of task
+          priority: 5,
 
-    // Priority of task
-    priority: 5,
+          // Requirements before task can be met
+          requirements:
+              room !== undefined && Memory.global.creeps.scouts.all.length < getCreepLimit(room, "scouts"),
 
-    // Requirements before task can be met
-    requirements: (room !== undefined&&Memory.global.creeps.scouts.all.length<creepLimits.scouts),
+          targetId: room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id,
 
-    targetId: room.find(FIND_MY_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_SPAWN})[0].id,
+          allocated: [compilerdumb],
 
-    allocated: [compilerdumb],
-
-
-    taskTree: {
-      // Possible children to be called
-      // Possible child 1
-      SpawnHaulerChild: {
-        info: SpawnScoutTask,
-        // A closedlistremoval task wasn't included here because that is built for tasks specific to a single room. An automatic removefromlist system in main.ts is being used instead.
-      },
-
-    },
+          taskTree: {
+              // Possible children to be called
+              // Possible child 1
+              SpawnHaulerChild: {
+                  info: SpawnScoutTask
+                  // A closedlistremoval task wasn't included here because that is built for tasks specific to a single room. An automatic removefromlist system in main.ts is being used instead.
+              }
+          }
+      };
+      //@ts-ignore
+      return plan;
   }
-  //@ts-ignore
-  return plan
-}
 export function CreateGoRemoteMinePlan(roomfrom: string, room: string, creep: Creep[]): GoRemoteMineConstructor {
     let plan = {
         // Type of task
@@ -542,6 +530,8 @@ export function CreateGoRemoteMinePlan(roomfrom: string, room: string, creep: Cr
     return plan;
 }
 export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Creep[]): GoRemoteMineConstructor {
+    let haulerMoveToRoom = { ...MoveToRoomTask };
+    haulerMoveToRoom.condition = true;
     let plan = {
         // Type of task
         type: "goRemoteHaul",
@@ -563,7 +553,7 @@ export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Cr
             // Possible children to be called
             // Possible child 1
             MoveToRoomTask: {
-                info: MoveToRoomTask,
+                info: haulerMoveToRoom,
                 children: {
                     RemoteGrabFromDroppedResourceTask: {
                         info: RemoteGrabFromDroppedResourceTask,
@@ -572,10 +562,10 @@ export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Cr
                                 info: reverseRoomAndPlanIdTask,
                                 children: {
                                     MoveToRoomTask: {
-                                        info: MoveToRoomTask,
+                                        info: haulerMoveToRoom,
                                         children: {
                                             GoToSpawnTask: {
-                                                info: GoToSpawnTask,
+                                                info: GoToSpawnTask
                                             }
                                         }
                                     }
@@ -583,7 +573,7 @@ export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Cr
                             }
                         }
                     }
-                },
+                }
             }
         }
     };
@@ -603,7 +593,8 @@ export function CreateSpawnRemotePlan(room: Room): SpawnCreepConstructor {
         priority: 5,
 
         // Requirements before task can be met
-        requirements: room !== undefined && room.memory.creeps.remoteminers.all.length < creepLimits.remoteminers,
+        requirements:
+            room !== undefined && room.memory.creeps.remoteminers.all.length < getCreepLimit(room, "remoteminers"),
 
         targetId: room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id,
 
@@ -636,7 +627,7 @@ export function CreateSpawnRemoteHaulerPlan(room: Room): SpawnCreepConstructor {
         priority: 5,
 
         // Requirements before task can be met
-        requirements: room !== undefined && room.memory.creeps.remotehaulers.all.length < creepLimits.remotehaulers,
+        requirements: room !== undefined && room.memory.creeps.remotehaulers.all.length < getCreepLimit(room,"remotehaulers"),
 
         targetId: room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN })[0].id,
 
@@ -657,35 +648,57 @@ export function CreateSpawnRemoteHaulerPlan(room: Room): SpawnCreepConstructor {
     return plan;
 }
 export function CreateFindandUpdateRemotesPlan(room: Room): FindUpdateRemotesConstructor {
-  let plan = {
+    let plan = {
+        // Type of task
+        type: "findUpdateRooms",
 
-    // Type of task
-    type: "findUpdateRooms",
+        // Room name of task
+        roomName: room.name,
 
-    // Room name of task
-    roomName: room.name,
+        // Priority of task
+        priority: 5,
 
-    // Priority of task
-    priority: 5,
+        // Requirements before task can be met
+        requirements: room !== undefined,
 
-    // Requirements before task can be met
-    requirements: (room !== undefined),
+        allocated: [room.name],
 
-    allocated: [room.name],
+        taskTree: {
+            // Possible children to be called
+            // Possible child 1
+            FindAndUpdateRemotesChild: {
+                info: FindAndUpdateRemotesTask,
+                RemoveFromClosedListTask6: {
+                    info: RemoveFromClosedListTask
+                }
+            }
+        }
+    };
+    //@ts-ignore
+    return plan;
+}
+export function CreateRunTowerTask(tower: StructureTower,room:Room): FindUpdateRemotesConstructor {
+    let plan = {
+        // Type of task
+        type: "TowerImmortalTask",
 
+        // Room name of task
+        roomName: room.name,
 
-    taskTree: {
-      // Possible children to be called
-      // Possible child 1
-        FindAndUpdateRemotesChild: {
-        info: FindAndUpdateRemotesTask,
-          RemoveFromClosedListTask6: {
-            info: RemoveFromClosedListTask
-          }
-      },
+        // Priority of task
+        priority: 5,
 
-    },
-  }
-  //@ts-ignore
-  return plan
+        // Requirements before task can be met
+        requirements: true,
+
+        allocated: [tower.id],
+
+        taskTree: {
+            runTowerForeverTask: {
+                info: runTowerForeverTask,
+            }
+        }
+    };
+    //@ts-ignore
+    return plan;
 }

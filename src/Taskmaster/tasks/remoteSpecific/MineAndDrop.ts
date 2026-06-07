@@ -48,7 +48,9 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
         iter += 1;
     }
     if(confirm===true) {
+        iter = 0;
         for (let I of allocatedItems) {
+
             let creep = Game.getObjectById(I);
             if (creep === null || !(creep instanceof Creep)) {
                 allocatedItems.splice(iter, 1);
@@ -58,6 +60,7 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
                     updatedItems: allocatedItems
                 };
             }
+            iter += 1;
             creep.drop(RESOURCE_ENERGY)
         }
     }
@@ -70,21 +73,39 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
 }
 export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUpdateRemotesConstructor): taskReturn {
     let maxcost = 50
-    let maxrooms = 2
+    let maxSources = 4
     let room = Game.rooms[allocatedItems[0]];
-    if(Game.time%10===0&&room.memory.AllocatedRooms.length<maxrooms) {
-        let checkrooms = ["W1N0", "E1N0", "E0N1", "E0S1", "E1S1", "W1S1", "E1N1", "W1N1", "W2N0", "E2N0", "E0N2", "E0S2", "E2S2", "W2S2", "E2N2", "W2N2", "W2N1", "W2S1", "E2N1", "E2S1", "W1N2", "W1S2", "E1N2", "E1S2"]
-        for(let room2 of checkrooms) {
-            room2 = addCoordinates(room.name,room2)
-            if(!Memory.roomData[room2]) continue
-            console.log("Cost of "+room2+" "+findCostOfRoom(room,room2))
-            if(findCostOfRoom(room,room2)<=maxcost) {
-                if(!room.memory.AllocatedRooms.some(i => i.RoomName === room2)) {
-                    room.memory.AllocatedRooms.push({RoomName:room2,Allocated:[],AllocatedHaulers:[], sources:Memory.roomData[room2].sources.length})
+    let currentSources = room.memory.AllocatedRooms.reduce((a, b) => {
+        return a + b.sources;
+    }, 0);
+    if(Game.time%10===0&&currentSources<maxSources) {
+        let checkrooms = ["W1N0", "E1N0", "E0N1", "E0S1", "E1S1", "W1S1", "E1N1", "W1N1", "W2N0", "E2N0", "E0N2", "E0S2", "E2S2", "W2S2", "E2N2", "W2N2", "W2N1", "W2S1", "E2N1", "E2S1", "W1N2", "W1S2", "E1N2", "E1S2"
+        ];
+        for (let room2 of checkrooms) {
+            let currentSources = room.memory.AllocatedRooms.reduce((a, b) => {
+                return a + b.sources;
+            }, 0);
+            if (currentSources >= maxSources) {
+                break;
+            }
+            room2 = addCoordinates(room.name, room2);
+            if (!Memory.roomData[room2]) continue;
+            console.log("Cost of " + room2 + " " + findCostOfRoom(room, room2));
+            if (findCostOfRoom(room, room2) <= maxcost) {
+                if (!room.memory.AllocatedRooms.some((i) => i.RoomName === room2)) {
+                    room.memory.AllocatedRooms.push({
+                        RoomName: room2,
+                        Allocated: [],
+                        AllocatedHaulers: [],
+                        sources: Memory.roomData[room2].sources.length
+                    });
                 }
             } else {
-                if(room.memory.AllocatedRooms.some(i=>i.RoomName===room2)) {
-                    room.memory.AllocatedRooms.splice(room.memory.AllocatedRooms.findIndex(i=>i.RoomName===room2),1)
+                if (room.memory.AllocatedRooms.some((i) => i.RoomName === room2)) {
+                    room.memory.AllocatedRooms.splice(
+                        room.memory.AllocatedRooms.findIndex((i) => i.RoomName === room2),
+                        1
+                    );
                 }
             }
         }
@@ -180,9 +201,9 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
         if (item.AllocatedHaulers.length > 0) {
             if (taskmaster.ContainsPlan("goRemoteHaul", undefined, item.AllocatedHaulers, undefined) === false) {
                 let iter = 0;
-                for (let remove of item.Allocated.map((i) => Game.getObjectById(i))) {
+                for (let remove of item.AllocatedHaulers.map((i) => Game.getObjectById(i))) {
                     if (remove === null) {
-                        item.Allocated.splice(iter, 1);
+                        item.AllocatedHaulers.splice(iter, 1);
                     }
                     iter++;
                 }

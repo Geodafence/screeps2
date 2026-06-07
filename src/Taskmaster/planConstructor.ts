@@ -74,5 +74,8 @@ export interface GoRemoteMineConstructor extends planConstructor {
   targetId: string
 }
 export interface FindUpdateRemotesConstructor extends planConstructor {
-  allocated: string[];
+    allocated: string[];
+}
+export interface TowerConstructor extends planConstructor {
+    allocated: Id<StructureTower>[];
 }
