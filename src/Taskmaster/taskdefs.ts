@@ -1,6 +1,6 @@
 import { GoHarvestConstructor, GoUpgradeConstructor, planConstructor } from "./planConstructor";
 import { nulltask, removeCreepFromList, reverseRoomAndPlanId } from "Taskmaster/tasks/general/MiscTasks";
-import { depositToSpawn, dropItems } from "Taskmaster/tasks/general/DepositAndRemoveEnergy";
+import { depositToSpawn, dropItems, QueendepositToSpawn } from "Taskmaster/tasks/general/DepositAndRemoveEnergy";
 import { GoUpgradeController, buildContainer, buildBuilding } from "Taskmaster/tasks/general/BuildAndUpgrade";
 import {
     SpawnHarvester,
@@ -9,17 +9,21 @@ import {
     SpawnBuilder,
     SpawnScout,
     SpawnRemote,
-    SpawnRemoteHauler
+    SpawnRemoteHauler,
+    SpawnQueen,
+    SpawnDefender
 } from "Taskmaster/tasks/general/SpawnCreep";
 import {
     findAndHarvest,
     GrabFromDroppedResource,
     GrabFromSpawn,
+    GrabFromStorage,
     HaulerGrabFromDroppedResource
 } from "Taskmaster/tasks/general/FindAndGetEnergy";
 import { MoveToRoom, ScoutRoom } from "./tasks/general/Travelling";
 import { FindAndUpdateRemotes, GoMineAndDrop } from "./tasks/remoteSpecific/MineAndDrop";
 import { runTowerForever } from "./tasks/buildings/Tower";
+import { ProtectRoom } from "./tasks/combat/CombatImmortalTask";
 
 export interface taskReturn {
     /**
@@ -152,7 +156,12 @@ export const TaskMap: {
     GoMineAndDrop: GoMineAndDrop,
     SpawnRemoteFunction: SpawnRemote,
     FindAndUpdateRemotes: FindAndUpdateRemotes,
-    runTowerForever: runTowerForever
+    runTowerForever: runTowerForever,
+    SpawnQueen: SpawnQueen,
+    QueendepositToSpawn: QueendepositToSpawn,
+    GrabFromStorage: GrabFromStorage,
+    ProtectRoom: ProtectRoom,
+    SpawnDefender: SpawnDefender
 };
 // Examples
 interface CreepTaskConstructor extends task {
@@ -348,10 +357,48 @@ export const SpawnRemoteHaulerTask: CreepTaskConstructor = {
 
     cost: 3
 };
-export const runTowerForeverTask: CreepTaskConstructor = {
+export const RunTowerImmortalTask: CreepTaskConstructor = {
     condition: "AlwaysTrueCondition",
 
     name: "runTowerForever",
 
     cost: 1
+};
+export const GrabFromStorageTask: CreepTaskConstructor = {
+    condition: "AlwaysTrueCondition",
+
+    name: "GrabFromStorage",
+
+    cost: 1
+};
+export const QueenDepositToSpawnTask: CreepTaskConstructor = {
+    condition: "AlwaysTrueCondition",
+
+    name: "QueendepositToSpawn",
+
+    cost: 1
+};
+
+export const SpawnQueenTask: CreepTaskConstructor = {
+    condition: "AlwaysTrueCondition",
+
+    name: "SpawnQueen",
+
+    cost: 1
+};
+export const ProtectRoomImmortalTask: CreepTaskConstructor = {
+    condition: "AlwaysTrueCondition",
+
+    name: "ProtectRoom",
+
+    cost: 1
+}
+export const SpawnDefenderTask: CreepTaskConstructor = {
+
+    condition: "AlwaysTrueCondition",
+
+    name: "SpawnDefender",
+
+    cost: 1,
+
 }

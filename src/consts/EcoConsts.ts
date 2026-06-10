@@ -1,8 +1,8 @@
 import { planConstructor } from "Taskmaster/planConstructor"
 import {
-    CreateSpawnBuilderPlan,
+    CreateSpawnBuilderPlan, CreateSpawnDefenderPlan,
     CreateSpawnHarvesterPlan,
-    CreateSpawnHaulerPlan,
+    CreateSpawnHaulerPlan, CreateSpawnQueenPlan,
     CreateSpawnRemoteHaulerPlan,
     CreateSpawnRemotePlan,
     CreateSpawnScoutPlan,
@@ -20,12 +20,14 @@ export const creepLimits: {
     remotehaulers: { [RCL: string]: number; default: number };
 } = {
     harvesters: { default: 2 },
-    haulers: { default: 4 },
-    upgraders: { default: 3, 2: 7, 3: 8 },
+    haulers: { default: 2, 1: 4, 2: 4, 5: 2 },
+    upgraders: { default: 3, 2: 7, 3: 8, 4: 5 },
     builders: { default: 2 },
     scouts: { default: 3 },
-    remoteminers: { default: 4, 1: 2, 3: 5},
-    remotehaulers: { default: 8, 1: 4, 3: 10 }
+    remoteminers: { default: 5, 1: 2, 3: 6, 4: 4},
+    remotehaulers: { default: 10, 1: 4, 3: 12, 4: 8 },
+    queens: { default: 2 },
+    defenders: { default: 2 },
 };
 export function getCreepLimit(room: Room, pointer: string): number {
     //@ts-ignore
@@ -51,6 +53,14 @@ export const buildOrder: creationOrder[] = [
         pointer: "haulers"
     },
     {
+        planFunction: CreateSpawnDefenderPlan,
+        planSkipCondition: (room:Room) => {
+            return !room.memory.flags.threatened
+        },
+        planName: "SpawnDefender",
+        pointer: "defenders"
+    },
+    {
         planFunction: CreateSpawnRemotePlan,
         planName: "SpawnRemote",
         pointer: "remoteminers"
@@ -59,6 +69,14 @@ export const buildOrder: creationOrder[] = [
         planFunction: CreateSpawnRemoteHaulerPlan,
         planName: "SpawnRemoteHauler",
         pointer: "remotehaulers"
+    },
+    {
+        planFunction: CreateSpawnQueenPlan,
+        planSkipCondition: (room: Room) => {
+            return room.find(FIND_STRUCTURES, { filter: (x) => x.structureType === STRUCTURE_STORAGE }).length === 0;
+        },
+        planName: "SpawnQueen",
+        pointer: "queens"
     },
     {
         planFunction: CreateSpawnBuilderPlan,

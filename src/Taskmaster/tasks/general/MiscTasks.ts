@@ -3,14 +3,15 @@ import { taskReturn } from "Taskmaster/taskdefs";
 
 
 export function removeCreepFromList(allocatedItems: Id<Creep>[], planState: planConstructor): taskReturn {
-    let namemapping: { [taskname: string]: string}  = {
-        "goHarvest": "harvesters",
-        "goHaul": "haulers",
-        "goUpgrade": "upgraders",
-        "goBuild": "builders",
-        "goScout": "scouts",
-        "goRemoteMine": "remoteminers"
-    }
+    let namemapping: { [taskname: string]: string } = {
+        goHarvest: "harvesters",
+        goHaul: "haulers",
+        goUpgrade: "upgraders",
+        goBuild: "builders",
+        goScout: "scouts",
+        goRemoteMine: "remoteminers",
+        goQueen: "queens"
+    };
     let removeFrom = namemapping[planState.type]
     for (let creep of allocatedItems) {
         let getroom = (Game.getObjectById(creep) !== null) ? Game.getObjectById(creep).room : (planState.roomName !== undefined) ? Game.rooms[planState.roomName] : null

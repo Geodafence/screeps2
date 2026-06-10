@@ -125,7 +125,7 @@ export function MoveToRoom(allocatedItems: Id<Creep>[], planState: GoRemoteMineC
             color: "blue"
         });
         if (creep.room.name !== roomname || creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 14) === false) {
-            creep.moveTo(new RoomPosition(25, 25, roomname));
+            creep.moveTo(new RoomPosition(25, 25, roomname), { maxOps: 2000,reusePath:40 });
         }
         if(creep.room.name !== roomname || !creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 20)) {
             confirm = false;

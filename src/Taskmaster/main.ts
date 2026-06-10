@@ -214,6 +214,7 @@ export class Taskmaster {
         if (plan.fullPlan.cancelCondition !== undefined) {
             if (ConditionMap[plan.fullPlan.cancelCondition](plan.fullPlan.allocated, plan.fullPlan)) return null;
         }
+        console.log("Name: "+curtask.name)
         //@ts-ignore
         let ret: taskReturn | boolean = TaskMap[curtask.name](plan.fullPlan.allocated, plan.fullPlan);
         let functionFinished: boolean = false;

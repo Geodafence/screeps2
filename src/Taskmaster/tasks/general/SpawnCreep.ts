@@ -208,3 +208,61 @@ export function SpawnRemoteHauler(allocatedItems: Id<StructureSpawn>[], planStat
         updatedItems: allocatedItems
     };
 }
+export function SpawnQueen(allocatedItems: Id<StructureSpawn>[], planState: SpawnCreepConstructor): taskReturn {
+    let spawn = Game.getObjectById(allocatedItems[0]);
+
+    if (!spawn) {
+        return {
+            suceeded: true,
+            status: "spawn no longer exists",
+            updatedItems: allocatedItems
+        };
+    }
+
+    if (spawn.room.energyAvailable >= 50) {
+        let name = generateName();
+        let ret = spawn.spawnCreep(InternalCalcBodySize(spawn, bodyConsts.hauler), name);
+        if (ret === OK) {
+            deferCreepGrab(spawn.room.name, "queen", name);
+            return {
+                suceeded: true,
+                status: "no errors",
+                updatedItems: allocatedItems
+            };
+        }
+    }
+    return {
+        suceeded: false,
+        status: "no errors",
+        updatedItems: allocatedItems
+    };
+}
+export function SpawnDefender(allocatedItems: Id<StructureSpawn>[], planState: SpawnCreepConstructor): taskReturn {
+    let spawn = Game.getObjectById(allocatedItems[0]);
+
+    if (!spawn) {
+        return {
+            suceeded: true,
+            status: "spawn no longer exists",
+            updatedItems: allocatedItems
+        };
+    }
+
+    if (spawn.room.energyAvailable >= 50) {
+        let name = generateName();
+        let ret = spawn.spawnCreep(InternalCalcBodySize(spawn, bodyConsts.defender), name);
+        if (ret === OK) {
+            deferCreepGrab(spawn.room.name, "defender", name);
+            return {
+                suceeded: true,
+                status: "no errors",
+                updatedItems: allocatedItems
+            };
+        }
+    }
+    return {
+        suceeded: false,
+        status: "no errors",
+        updatedItems: allocatedItems
+    };
+}

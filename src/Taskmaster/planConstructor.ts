@@ -4,15 +4,15 @@ import { findAndHarvestTask, HarvesterGoToSpawnTask, task } from "./taskdefs";
 
 
 export interface planConstructor {
-  /*Name of plan **/
+  /**Name of plan **/
   type: string;
-  /* The optional id of the plan. This exists soely to use with ContainsPlan
+  /** The optional id of the plan. This exists solely to use with ContainsPlan
 
   For best practice, this should never be defined in the plan function**/
   id?: string;
-  /*Priority of plan**/
+  /**Priority of plan**/
   priority: number;
-  /*Optional room name of plan **/
+  /**Optional room name of plan **/
   roomName?: string;
   /** A condition to cancel the task. Add the function to ConditionMap and add its name here. */
   cancelCondition?: string;
@@ -25,7 +25,7 @@ export interface planConstructor {
    * Add a custom type overriding targetId if you want specific info for tasks.
   */
   targetId: (() => any) | any;
-  /** Forced cpu use, otherwise avges out the last 5 cpu usages of the plan */
+  /** Forced cpu use, otherwise averages out the last 5 cpu usages of the plan */
   forceCPU?: number;
   /** Task tree deciding what to do */
   taskTree: taskTree;
@@ -78,4 +78,7 @@ export interface FindUpdateRemotesConstructor extends planConstructor {
 }
 export interface TowerConstructor extends planConstructor {
     allocated: Id<StructureTower>[];
+}
+export interface GoQueenConstructor extends planConstructor {
+    targetId: null;
 }

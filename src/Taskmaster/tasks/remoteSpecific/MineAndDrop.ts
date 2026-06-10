@@ -3,8 +3,11 @@ import { Taskmaster } from "Taskmaster/main";
 import { FindUpdateRemotesConstructor, GoRemoteMineConstructor } from "Taskmaster/planConstructor";
 import { CreateGoRemoteHaulPlan, CreateGoRemoteMinePlan } from "Taskmaster/plans";
 import { taskReturn } from "Taskmaster/taskdefs";
+import { getCreepLimit } from "../../../consts/EcoConsts";
+import { detectDanger } from "../../../functions/combatDetections";
 
-export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemoteMineConstructor): taskReturn {
+export function GoMineAndDrop(allocatedItems: Id<Creep>[], planState: GoRemoteMineConstructor): taskReturn {
+
     let iter = 0;
     let confirm = true;
     for (let I of allocatedItems) {
@@ -17,6 +20,7 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
                 updatedItems: allocatedItems
             };
         }
+        detectDanger(creep);
 
         new RoomVisual(creep.room.name).text("Remote Mining " + planState.targetId, creep.pos.x, creep.pos.y, {
             color: "red"
@@ -30,27 +34,25 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
                 updatedItems: allocatedItems
             };
         }
-        console.log("Remote mining Source "+ source)
-        if(planState.targetId!==creep.room.name) {
-            creep.moveTo(source)
+        console.log("Remote mining Source " + source);
+        if (planState.targetId !== creep.room.name) {
+            creep.moveTo(source);
         } else {
-            let sourcereal = new RoomPosition(source.x,source.y,source.roomName).findInRange(FIND_SOURCES,3)[0]
-            console.log("sourcereal "+JSON.stringify(sourcereal))
-            if (creep.harvest(sourcereal) !==OK) {
-                creep.moveTo(sourcereal);
+            let sourcereal = new RoomPosition(source.x, source.y, source.roomName).findInRange(FIND_SOURCES, 3)[0];
+            console.log("sourcereal " + JSON.stringify(sourcereal));
+            if (creep.harvest(sourcereal) !== OK) {
+                creep.moveTo(sourcereal,{maxRooms: 1});
             }
         }
-
 
         if (creep.store.getFreeCapacity() !== 0) {
             confirm = false;
         }
         iter += 1;
     }
-    if(confirm===true) {
+    if (confirm === true) {
         iter = 0;
         for (let I of allocatedItems) {
-
             let creep = Game.getObjectById(I);
             if (creep === null || !(creep instanceof Creep)) {
                 allocatedItems.splice(iter, 1);
@@ -61,7 +63,7 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
                 };
             }
             iter += 1;
-            creep.drop(RESOURCE_ENERGY)
+            creep.drop(RESOURCE_ENERGY);
         }
     }
 
@@ -72,15 +74,15 @@ export function GoMineAndDrop(allocatedItems: Id<AnyCreep>[], planState: GoRemot
     };
 }
 export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUpdateRemotesConstructor): taskReturn {
-    let maxcost = 50
-    let maxSources = 4
     let room = Game.rooms[allocatedItems[0]];
+    let maxcost = 50;
+    let maxSources = getCreepLimit(room,"remoteminers");
+
     let currentSources = room.memory.AllocatedRooms.reduce((a, b) => {
         return a + b.sources;
     }, 0);
-    if(Game.time%10===0&&currentSources<maxSources) {
-        let checkrooms = ["W1N0", "E1N0", "E0N1", "E0S1", "E1S1", "W1S1", "E1N1", "W1N1", "W2N0", "E2N0", "E0N2", "E0S2", "E2S2", "W2S2", "E2N2", "W2N2", "W2N1", "W2S1", "E2N1", "E2S1", "W1N2", "W1S2", "E1N2", "E1S2"
-        ];
+    if (Game.time % 10 === 0 && currentSources < maxSources) {
+        let checkrooms = ["W1N0", "E1N0", "E0N1", "E0S1", "E1S1", "W1S1", "E1N1", "W1N1", "W2N0", "E2N0", "E0N2", "E0S2", "E2S2", "W2S2", "E2N2", "W2N2", "W2N1", "W2S1", "E2N1", "E2S1", "W1N2", "W1S2", "E1N2", "E1S2"];
         for (let room2 of checkrooms) {
             let currentSources = room.memory.AllocatedRooms.reduce((a, b) => {
                 return a + b.sources;
@@ -91,7 +93,7 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
             room2 = addCoordinates(room.name, room2);
             if (!Memory.roomData[room2]) continue;
             console.log("Cost of " + room2 + " " + findCostOfRoom(room, room2));
-            if (findCostOfRoom(room, room2) <= maxcost) {
+            if (findCostOfRoom(room, room2) <= maxcost&&Memory.roomData[room2].sources.length <= 2) {
                 if (!room.memory.AllocatedRooms.some((i) => i.RoomName === room2)) {
                     room.memory.AllocatedRooms.push({
                         RoomName: room2,
@@ -111,7 +113,12 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
         }
     }
     //@ts-ignore
-    console.logUnsafe("[red]"+Memory.rooms[room.name].creeps.remoteminers.all.length+" "+Memory.rooms[room.name].creeps.remoteminers.closed.length)
+    console.logUnsafe(
+        "[red]" +
+            Memory.rooms[room.name].creeps.remoteminers.all.length +
+            " " +
+            Memory.rooms[room.name].creeps.remoteminers.closed.length
+    );
     if (
         Memory.rooms[room.name].creeps.remoteminers.all.length >
         Memory.rooms[room.name].creeps.remoteminers.closed.length
@@ -144,8 +151,11 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
         Memory.rooms[room.name].creeps.remoteminers.closed =
             Memory.rooms[room.name].creeps.remoteminers.closed.concat(toClose);
     }
-        // TODO: Ugly repeated code
-    if(Memory.rooms[room.name].creeps.remotehaulers.all.length>Memory.rooms[room.name].creeps.remotehaulers.closed.length) {
+    // TODO: Ugly repeated code
+    if (
+        Memory.rooms[room.name].creeps.remotehaulers.all.length >
+        Memory.rooms[room.name].creeps.remotehaulers.closed.length
+    ) {
         let toAdd = Memory.rooms[room.name].creeps.remotehaulers.all.filter(
             (i) => Memory.rooms[room.name].creeps.remotehaulers.closed.includes(i) === false
         );
@@ -161,7 +171,11 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
                     Aroom.AllocatedHaulers = Aroom.AllocatedHaulers.removeItemOnce(creep);
                 }
             }
-            if (Aroom.sources * 2 > Aroom.AllocatedHaulers.length) {
+
+            // TODO: Change from hardcoded
+            let multiplication = (room.controller?.level || 0) >= 5 ? 1: 2
+
+            if (Math.ceil(Aroom.sources * multiplication) > Aroom.AllocatedHaulers.length) {
                 //@ts-ignore
                 let creep: Id<Creep> = toAdd.shift();
 
@@ -175,10 +189,10 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
             Memory.rooms[room.name].creeps.remotehaulers.closed.concat(toClose);
     }
 
-    let iter = 0
+    let iter = 0;
     for (let item of room.memory.AllocatedRooms) {
         if (item.Allocated.length > 0) {
-            if (taskmaster.ContainsPlan("goRemoteMine", undefined, undefined, item.RoomName) === false) {
+            if (!taskmaster.ContainsPlan("goRemoteMine", undefined, undefined, item.RoomName)) {
                 let iter = 0;
                 for (let remove of item.Allocated.map((i) => Game.getObjectById(i))) {
                     if (remove === null) {
@@ -199,7 +213,7 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
         }
         // TODO: Ugly repeated code
         if (item.AllocatedHaulers.length > 0) {
-            if (taskmaster.ContainsPlan("goRemoteHaul", undefined, item.AllocatedHaulers, undefined) === false) {
+            if (!taskmaster.ContainsPlan("goRemoteHaul", undefined, item.AllocatedHaulers, undefined)) {
                 let iter = 0;
                 for (let remove of item.AllocatedHaulers.map((i) => Game.getObjectById(i))) {
                     if (remove === null) {
@@ -224,7 +238,7 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
     return {
         status: "no errors",
         suceeded: true
-    }
+    };
 }
 function findCostOfRoom(room:Room,room2:string) {
     console.log("1 "+room2 + " " + room.name)
