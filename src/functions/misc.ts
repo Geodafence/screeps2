@@ -82,169 +82,46 @@ function getWorldCoord(pos: RoomPosition) {
     return { x: 50 * wx + x, y: 50 * wy + y };
 }
 
-export function SayAll(creepList: Creep[]) {
-    let text = [
-        "There", "once", "was", "a", "ship", "that", "put", "to", "sea",
-        "The", "name", "of", "the", "ship", "was", "the", "Billy", "of", "Tea",
-        "The", "winds", "blew", "up", "her", "bow", "dipped", "down",
-        "O", "blow", "my", "bully", "boys", "blow", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tea", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "done",
-        "We'll", "take", "our", "leave", "and", "go",
-        "She", "had", "not", "been", "two", "weeks", "from", "shore",
-        "When", "down", "on", "her", "a", "right", "whale", "bore",
-        "The", "captain", "called", "all", "hands", "and", "swore",
-        "He'd", "take", "that", "whale", "in", "tow", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tеa", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "donе",
-        "We'll", "take", "our", "leave", "and", "go",
-        "Before", "the", "boat", "had", "hit", "the", "water",
-        "The", "whale's", "tail", "came", "up", "and", "caught", "her",
-        "All", "hands", "to", "the", "side", "harpooned", "and", "fought", "her",
-        "When", "she", "dived", "down", "low", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tea", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "done",
-        "We'll", "take", "our", "leave", "and", "go",
-        "No", "line", "was", "cut", "no", "whale", "was", "freed",
-        "The", "Captain's", "mind", "was", "not", "of", "greed",
-        "But", "he", "belonged", "to", "the", "Wellermans", "creed",
-        "She", "took", "that", "ship", "in", "tow", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tea", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "done",
-        "We'll", "take", "our", "leave", "and", "go",
-        "For", "forty", "days", "or", "even", "more",
-        "The", "line", "went", "slack", "then", "tight", "once", "more",
-        "All", "boats", "were", "lost", "there", "were", "only", "four",
-        "But", "still", "that", "whale", "did", "go", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tea", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "done",
-        "We'll", "take", "our", "leave", "and", "go",
-        "As", "far", "as", "I've", "heard", "the", "fight's", "still", "on",
-        "The", "line's", "not", "cut", "and", "the", "whale's", "not", "gone",
-        "The", "Wellerman", "makes", "his", "regular", "call",
-        "To", "encourage", "the", "Captain", "crew", "and", "all", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tea", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "done",
-        "We'll", "take", "our", "leave", "and", "go", "Huh!",
-        "Soon", "may", "the", "Wellerman", "come",
-        "To", "bring", "us", "sugar", "and", "tea", "and", "rum",
-        "One", "day", "when", "the", "tonguin'", "is", "done",
-        "We'll", "take", "our", "leave", "and", "go",
-        "hm","hm","hm","hm","hm","hm","hm","hm","hm","hm","hm","hm",
-        "I", "thought", "I", "heard", "the", "Old", "Man", "say:",
-        "Leave", "her,", "Johnny,", "leave", "her.",
-        "Tomorrow", "you", "will", "get", "your", "pay", "And", "it\'s", "time", "for", "us", "to", "leave", "her",
-        "Leave", "her,", "Johnny,", "leave", "her",
-        "I", "thought", "I", "heard", "the", "Old", "Man", "say",
-        "Leave", "her", "Johnny", "leave", "her",
-        "Tomorrow", "you", "will", "get", "your", "pay",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "Leave", "her", "Johnny", "leave", "her",
-        "Oh", "leave", "her", "Johnny", "leave", "her",
-        "For", "the", "voyage", "is", "long", "and", "the", "winds", "don't", "blow",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "Oh", "the", "wind", "was", "foul", "and", "the", "sea", "ran", "high",
-        "Leave", "her", "Johnny", "leave", "her",
-        "She", "shipped", "it", "green", "and", "none", "went", "by",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "Leave", "her", "Johnny", "leave", "her",
-        "Oh", "leave", "her", "Johnny", "leave", "her",
-        "For", "the", "voyage", "is", "long", "and", "the", "winds", "don't", "blow",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "I", "hate", "to", "sail", "on", "this", "rotten", "tub",
-        "Leave", "her", "Johnny", "leave", "her",
-        "No", "grog", "allowed", "and", "rotten", "grub",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "Leave", "her", "Johnny", "leave", "her",
-        "Oh", "leave", "her", "Johnny", "leave", "her",
-        "For", "the", "voyage", "is", "long", "and", "the", "winds", "don't", "blow",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "We", "swear", "by", "rote", "for", "want", "of", "more",
-        "Leave", "her", "Johnny", "leave", "her",
-        "But", "now", "we're", "through", "so", "we'll", "go", "on", "shore",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "Leave", "her", "Johnny", "leave", "her",
-        "Oh", "leave", "her", "Johnny", "leave", "her",
-        "For", "the", "voyage", "is", "long", "and", "the", "winds", "don't", "blow",
-        "And", "it's", "time", "for", "us", "to", "leave", "her",
-        "hm","hm","hm","hm","hm","hm","hm","hm","hm","hm","hm","hm",
-        "What", "will", "we", "do", "with", "a", "drunken", "sailor",
-        "What", "will", "we", "do", "with", "a", "drunken", "sailor",
-        "What", "will", "we", "do", "with", "a", "drunken", "sailor",
-        "Early", "in", "the", "morning",
+export function flee(creep: Creep, goal: RoomObject, range: number = 6) {
+    //@ts-ignore
+    let goals = { pos: goal.pos, range: range };
+    let ret = PathFinder.search(creep.pos, goals, {
+        // We need to set the defaults costs higher so that we
+        // can set the road cost lower in `roomCallback`
+        plainCost: 2,
+        swampCost: 10,
+        maxRooms: 1,
+        flee: true,
 
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
+        roomCallback: function (roomName) {
+            let room = Game.rooms[roomName];
+            // In this example `room` will always exist, but since
+            // PathFinder supports searches which span multiple rooms
+            // you should be careful!
+            if (!room) return new PathFinder.CostMatrix();
+            let costs = new PathFinder.CostMatrix();
 
-        "Shave", "his", "belly", "with", "a", "rusty", "razor",
-        "Shave", "his", "belly", "with", "a", "rusty", "razor",
-        "Shave", "his", "belly", "with", "a", "rusty", "razor",
-        "Early", "in", "the", "morning",
+            room.find(FIND_STRUCTURES).forEach(function (struct) {
+                if (struct.structureType === STRUCTURE_ROAD) {
+                    // Favor roads over plain tiles
+                    costs.set(struct.pos.x, struct.pos.y, 1);
+                } else if (
+                    struct.structureType !== STRUCTURE_CONTAINER &&
+                    (struct.structureType !== STRUCTURE_RAMPART || !struct.my)
+                ) {
+                    // Can't walk through non-walkable buildings
+                    costs.set(struct.pos.x, struct.pos.y, 0xff);
+                }
+            });
 
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
+            // Avoid creeps in the room
+            room.find(FIND_CREEPS).forEach(function (creep) {
+                costs.set(creep.pos.x, creep.pos.y, 0xff);
+            });
 
-        "Put", "him", "in", "a", "long", "boat", "till", "his", "sober",
-        "Put", "him", "in", "a", "long", "boat", "till", "his", "sober",
-        "Put", "him", "in", "a", "long", "boat", "till", "his", "sober",
-        "Early", "in", "the", "morning",
-
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
-
-        "Stick", "him", "in", "a", "barrel", "with", "a", "hosepipe", "on", "him",
-        "Stick", "him", "in", "a", "barrel", "with", "a", "hosepipe", "on", "him",
-        "Stick", "him", "in", "a", "barrel", "with", "a", "hosepipe", "on", "him",
-        "Early", "in", "the", "morning",
-
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
-
-        "Put", "him", "in", "the", "bed", "with", "the", "captains", "daughter",
-        "Put", "him", "in", "the", "bed", "with", "the", "captains", "daughter",
-        "Put", "him", "in", "the", "bed", "with", "the", "captains", "daughter",
-        "Early", "in", "the", "morning",
-
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
-
-        "Thats", "what", "we", "do", "with", "a", "drunken", "sailor",
-        "Thats", "what", "we", "do", "with", "a", "drunken", "sailor",
-        "Thats", "what", "we", "do", "with", "a", "drunken", "sailor",
-        "Early", "in", "the", "morning",
-
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
-
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Way", "hay", "and", "up", "she", "rises",
-        "Early", "in", "the", "morning",
-        "hm","hm","hm","hm","hm","hm","hm","hm","hm","hm","hm","hm",
-    ]
-    let start = Game.time /** creepList.length*/ % text.length
-    creepList[Math.floor(Math.random()*creepList.length)].say(text[start],true)
-    //for (let creep of creepList) {
-    //    creep.say(text[start], true)
-    //    start += 1
-    //}
+            return costs;
+        }
+    });
+    let pos = ret.path[0];
+    return ret.path;
 }
-

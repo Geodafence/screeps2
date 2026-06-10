@@ -12,3 +12,7 @@ export function InternalCalcBodySize(spawn: StructureSpawn, bodydict: { [num: nu
     }
     return biggest;
 }
+export function getUsableSpawns(room:Room) {
+    let spawns = room.find(FIND_MY_SPAWNS).filter((a)=>!a.spawning);
+    return spawns[0] || room.find(FIND_MY_SPAWNS)[0];
+}

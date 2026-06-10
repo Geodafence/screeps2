@@ -12,10 +12,10 @@ Goals
    2. [X] Add shooting enemy creeps
    3. [X] Add healing damaged buildings
 3. Add Queens after storage is built
-   1. [ ] Make haulers deposit to storage, if available.
-   2. [ ] Add a spawnqueen function when storage is available.
-   3. [ ] Make queens grab energy and fill extensions, spawns, and towers.
-   4. [ ] Make upgraders and builders grab from storages instead.
+   1. [X] Make haulers deposit to storage, if available.
+   2. [X] Add a spawnqueen function when storage is available.
+   3. [X] Make queens grab energy and fill extensions, spawns, and towers.
+   4. [X] Make upgraders and builders grab from storages instead.
    5. [ ] Maybe remove the container when storage exists?
 4. Add support for additional rooms
    1. [ ] Empty plan

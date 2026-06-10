@@ -47,14 +47,17 @@ export function findAndHarvest(allocatedItems: Id<AnyCreep>[] | Id<Structure>[],
         updatedItems: allocatedItems
     };
 }
-export function GrabFromSpawn(allocatedItems: Id<AnyCreep>[] | Id<Structure>[], planState: GoUpgradeConstructor): taskReturn {
-    let iter = 0
-    let confirm = true
+export function GrabFromSpawn(
+    allocatedItems: Id<AnyCreep>[] | Id<Structure>[],
+    planState: GoUpgradeConstructor
+): taskReturn {
+    let iter = 0;
+    let confirm = true;
     for (let I of allocatedItems) {
-        let creep = Game.getObjectById(I)
-        let spawn: AnyStructure = Game.getObjectById(planState.targetId.spawn)
+        let creep = Game.getObjectById(I);
+        let spawn: AnyStructure = Game.getObjectById(planState.targetId.spawn);
         if (creep === null || !(creep instanceof Creep) || spawn === null) {
-            allocatedItems.splice(iter, 1)
+            allocatedItems.splice(iter, 1);
             return {
                 suceeded: false,
                 status: "creep doesn't exist",
@@ -65,28 +68,77 @@ export function GrabFromSpawn(allocatedItems: Id<AnyCreep>[] | Id<Structure>[], 
         if (creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_CONTAINER }).length > 0) {
             spawn = creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_CONTAINER })[0];
             container = true;
+
+        }
+
+        // @ts-ignore
+        let storage: StructureStorage = creep.room.find(FIND_STRUCTURES, {
+            filter: (a) => a.structureType === STRUCTURE_STORAGE
+        })[0];
+        if (storage && creep.room.memory.creeps.queens.all.length > 0) {
+            spawn = storage;
+            container = true;
         }
 
         if (creep.withdraw(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(spawn)
-
+            creep.moveTo(spawn);
         }
         // @ts-ignore
-        if(container&&spawn.store.getUsedCapacity()===0) {
-            creep.moveTo(new RoomPosition(25,25,creep.room.name));
+        if (container && spawn.store.getUsedCapacity() === 0) {
+            creep.moveTo(new RoomPosition(25, 25, creep.room.name),{maxRooms:1,maxOps: 80});
         }
         if (creep.store.getFreeCapacity() !== 0) {
-            confirm = false
+            confirm = false;
         }
-        iter += 1
+        iter += 1;
     }
-
 
     return {
         suceeded: confirm,
         status: "no errors",
         updatedItems: allocatedItems
+    };
+}
+export function GrabFromStorage(
+    allocatedItems: Id<AnyCreep>[] | Id<Structure>[],
+    planState: GoUpgradeConstructor
+): taskReturn {
+    let iter = 0;
+    let confirm = true;
+    for (let I of allocatedItems) {
+        let creep = Game.getObjectById(I);
+        //let spawn: AnyStructure = Game.getObjectById(planState.targetId.spawn);
+        if (creep === null || !(creep instanceof Creep)) {
+            allocatedItems.splice(iter, 1);
+            return {
+                suceeded: false,
+                status: "creep doesn't exist",
+                updatedItems: allocatedItems
+            };
+        }
+        if (creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_STORAGE }).length > 0) {
+            // @ts-ignore
+            let storage: StructureStorage = creep.room.find(FIND_STRUCTURES, { filter: (a) => a.structureType === STRUCTURE_STORAGE })[0];
+
+            if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(storage);
+            }
+            if (storage.store.getUsedCapacity() === 0) {
+                creep.moveTo(new RoomPosition(25, 25, creep.room.name));
+            }
+        }
+
+        if (creep.store.getFreeCapacity() !== 0) {
+            confirm = false;
+        }
+        iter += 1;
     }
+
+    return {
+        suceeded: confirm,
+        status: "no errors",
+        updatedItems: allocatedItems
+    };
 }
 export function HaulerGrabFromDroppedResource(allocatedItems: Id<Creep>[], planState: GoHaulConstructor): taskReturn {
     let iter = 0;
