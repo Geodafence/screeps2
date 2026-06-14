@@ -105,7 +105,9 @@ export function GoUpgradeController(allocatedItems: Id<AnyCreep>[] | Id<Structur
                 updatedItems: allocatedItems
             }
         }
-        if (creep.upgradeController(controller) === ERR_NOT_IN_RANGE) {
+
+        creep.upgradeController(controller)
+        if (!creep.pos.inRangeTo(controller.pos, 2)) {
             creep.moveTo(controller)
         }
 

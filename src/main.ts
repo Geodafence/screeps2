@@ -22,6 +22,7 @@ import { ErrorMapper } from "ErrorMapper";
 import { SayAll } from "./functions/sayAll";
 import { RespondToCombatThreats } from "./Taskmaster/tasks/combat/AllocateCombatCreeps";
 import { getUsableSpawns } from "./functions/HelperFunctions";
+import { FindAndUpdateRemotes } from "./Taskmaster/tasks/remoteSpecific/MineAndDrop";
 // main.js
 //import * as trafficManager from "./imports/TrafficManager";
 declare global {
@@ -70,8 +71,6 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 }
             }
             Memory.deferCreepGrab.splice(Memory.deferCreepGrab.indexOf(grab), 1);
-            // TODO: Figure out if this makes stuff break less.
-            break;
         }
     }
     if(Memory.global.creeps===undefined) {
@@ -125,7 +124,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 buildInfo: { builds: [], sites: [], built: [], confirmed: false },
                 init: true,
                 flags: {
-                    threatened: false
+                    threatened: false,
+                    restartRoom: false,
                 }
             };
         }
@@ -214,13 +214,11 @@ export const loop = ErrorMapper.wrapLoop(() => {
         */
 
         if (
-            !taskmaster.ContainsInactivePlan("goHaul", room.name) &&
             room.memory.creeps.haulers.all.length > room.memory.creeps.haulers.closed.length &&
             room.find(FIND_DROPPED_RESOURCES).length > 0
         ) {
             let creeplist = room.memory.creeps.haulers.all.filter(
-                (a) =>
-                    !room.memory.creeps.haulers.closed.includes(a) && !Game.getObjectById(a).spawning
+                (a) => !room.memory.creeps.haulers.closed.includes(a) && !Game.getObjectById(a).spawning
             );
             if (creeplist.length > 0) {
                 for (let creep of creeplist) {
@@ -233,13 +231,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
 
-        if (
-            !taskmaster.ContainsInactivePlan("goHarvest", room.name) &&
-            room.memory.creeps.harvesters.all.length > room.memory.creeps.harvesters.closed.length
-        ) {
+        if (room.memory.creeps.harvesters.all.length > room.memory.creeps.harvesters.closed.length) {
             let creeplist = room.memory.creeps.harvesters.all.filter(
-                (a) =>
-                    !room.memory.creeps.harvesters.closed.includes(a) && !Game.getObjectById(a).spawning
+                (a) => !room.memory.creeps.harvesters.closed.includes(a) && !Game.getObjectById(a).spawning
             );
             if (creeplist.length > 0) {
                 for (let creep of creeplist) {
@@ -252,13 +246,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
 
-        if (
-            !taskmaster.ContainsInactivePlan("goUpgrade", room.name) &&
-            room.memory.creeps.upgraders.all.length > room.memory.creeps.upgraders.closed.length
-        ) {
+        if (room.memory.creeps.upgraders.all.length > room.memory.creeps.upgraders.closed.length) {
             let creeplist = room.memory.creeps.upgraders.all.filter(
-                (a) =>
-                    !room.memory.creeps.upgraders.closed.includes(a) && !Game.getObjectById(a).spawning
+                (a) => !room.memory.creeps.upgraders.closed.includes(a) && !Game.getObjectById(a).spawning
             );
             if (creeplist.length > 0) {
                 for (let creep of creeplist) {
@@ -271,13 +261,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
 
-        if (
-            !taskmaster.ContainsInactivePlan("goBuild",room.name) &&
-            room.memory.creeps.builders.all.length > room.memory.creeps.builders.closed.length
-        ) {
+        if (room.memory.creeps.builders.all.length > room.memory.creeps.builders.closed.length) {
             let creeplist = room.memory.creeps.builders.all.filter(
-                (a) =>
-                    !room.memory.creeps.builders.closed.includes(a) && !Game.getObjectById(a).spawning
+                (a) => !room.memory.creeps.builders.closed.includes(a) && !Game.getObjectById(a).spawning
             );
             if (creeplist.length > 0) {
                 for (let creep of creeplist) {
@@ -289,13 +275,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
                 }
             }
         }
-        if (
-            !taskmaster.ContainsInactivePlan("goQueen",room.name) &&
-            room.memory.creeps.queens.all.length > room.memory.creeps.queens.closed.length
-        ) {
+        if (room.memory.creeps.queens.all.length > room.memory.creeps.queens.closed.length) {
             let creeplist = room.memory.creeps.queens.all.filter(
-                (a) =>
-                    !room.memory.creeps.queens.closed.includes(a) && !Game.getObjectById(a).spawning
+                (a) => !room.memory.creeps.queens.closed.includes(a) && !Game.getObjectById(a).spawning
             );
             if (creeplist.length > 0) {
                 for (let creep of creeplist) {
@@ -314,16 +296,32 @@ export const loop = ErrorMapper.wrapLoop(() => {
             }
         }
 
-        if (!taskmaster.ContainsPlan("findUpdateRooms",room.name)) {
-            taskmaster.AppendPlan(CreateFindandUpdateRemotesPlan(Spawn.room));
-        }
+        //if (!taskmaster.ContainsPlan("findUpdateRooms",room.name)) {
+        //taskmaster.AppendPlan(CreateFindandUpdateRemotesPlan(Spawn.room));
+        //}
 
         // Run additional functions
         if (Game.time % 20 === 0) {
             createAndUpdateCheckerSite(room.memory, "buildInfo", Spawn.name);
         }
         RespondToCombatThreats(room);
+        FindAndUpdateRemotes([room.name]);
 
+        if (
+            room.memory.creeps.harvesters.all.length === 0 &&
+            room.memory.creeps.haulers.all.length === 0 &&
+            room.memory.creeps.remotehaulers.all.length === 0 &&
+            room.memory.creeps.remoteminers.all.length === 0
+        ) {
+            room.memory.flags.restartRoom = true;
+        }
+        if(
+            room.memory.creeps.harvesters.all.length >= getCreepLimit(room,"harvesters") &&
+            room.memory.creeps.haulers.all.length >= getCreepLimit(room,"haulers") &&
+            room.memory.creeps.remotehaulers.all.length >= getCreepLimit(room,"remotehaulers")
+        ) {
+            room.memory.flags.restartRoom = false;
+        }
         //if(taskmaster.ContainsActivePlan("GoUpgrade")===false&&taskmaster.ContainsInactivePlan("GoUpgrade")===false)
         //taskmaster.AppendPlan(CreateGoUpgradePlan(Spawn.room.name,Game.creeps["upgrade"]))
         let allcreeps = room.memory.creeps.harvesters.all.concat(room.memory.creeps.haulers.all);
@@ -375,8 +373,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
     taskmaster.run()
 })
 function InternalCalcBodySize(spawn:StructureSpawn,bodydict:{[num:number]:BodyPartConstant[]}):BodyPartConstant[] {
-    let size = Math.floor(spawn.room.energyCapacityAvailable/50)*50
-    let biggest:BodyPartConstant[] = []
+    let size = Math.floor(spawn.room.energyCapacityAvailable / 50) * 50;
+    let biggest: BodyPartConstant[] = [];
     for(let I in bodydict) {
         //@ts-ignore
         if(size >= I) {

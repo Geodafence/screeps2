@@ -5,6 +5,7 @@ import { CreateGoRemoteHaulPlan, CreateGoRemoteMinePlan } from "Taskmaster/plans
 import { taskReturn } from "Taskmaster/taskdefs";
 import { getCreepLimit } from "../../../consts/EcoConsts";
 import { detectDanger } from "../../../functions/combatDetections";
+import { SayAll } from "../../../functions/sayAll";
 
 export function GoMineAndDrop(allocatedItems: Id<Creep>[], planState: GoRemoteMineConstructor): taskReturn {
 
@@ -50,7 +51,7 @@ export function GoMineAndDrop(allocatedItems: Id<Creep>[], planState: GoRemoteMi
         }
         iter += 1;
     }
-    if (confirm === true) {
+    if (confirm) {
         iter = 0;
         for (let I of allocatedItems) {
             let creep = Game.getObjectById(I);
@@ -65,15 +66,31 @@ export function GoMineAndDrop(allocatedItems: Id<Creep>[], planState: GoRemoteMi
             iter += 1;
             creep.drop(RESOURCE_ENERGY);
         }
-    }
+        confirm = false;
 
+        if (planState.roomName) {
+            let room = Game.rooms[planState.roomName];
+
+            let roomData = room.memory.AllocatedRooms.find((a)=>a.RoomName===planState.targetId);
+            if(roomData) {
+                if (allocatedItems.length !== roomData.Allocated.length) {
+                    confirm = true;
+                }
+            }
+        }
+    }
+    //SayAll(
+    //    allocatedItems.map((a) => Game.getObjectById(a)),
+    //    "sixteentons"
+    //;
     return {
         suceeded: confirm,
         status: "no errors",
         updatedItems: allocatedItems
     };
 }
-export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUpdateRemotesConstructor): taskReturn {
+
+export function FindAndUpdateRemotes(allocatedItems: string[]): taskReturn {
     let room = Game.rooms[allocatedItems[0]];
     let maxcost = 50;
     let maxSources = getCreepLimit(room,"remoteminers");
@@ -93,7 +110,7 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
             room2 = addCoordinates(room.name, room2);
             if (!Memory.roomData[room2]) continue;
             console.log("Cost of " + room2 + " " + findCostOfRoom(room, room2));
-            if (findCostOfRoom(room, room2) <= maxcost&&Memory.roomData[room2].sources.length <= 2) {
+            if (findCostOfRoom(room, room2) <= maxcost&&Memory.roomData[room2].sources.length <= 2&&!Memory.roomData[room2].controller.owned) {
                 if (!room.memory.AllocatedRooms.some((i) => i.RoomName === room2)) {
                     room.memory.AllocatedRooms.push({
                         RoomName: room2,
@@ -173,7 +190,7 @@ export function FindAndUpdateRemotes(allocatedItems: string[], planState: FindUp
             }
 
             // TODO: Change from hardcoded
-            let multiplication = (room.controller?.level || 0) >= 5 ? 1: 2
+            let multiplication = (room.controller?.level || 0) === 3 ? 3 : (room.controller?.level || 0) === 2 ? 3 : (room.controller?.level || 0) >= 5 ? 1: 2
 
             if (Math.ceil(Aroom.sources * multiplication) > Aroom.AllocatedHaulers.length) {
                 //@ts-ignore

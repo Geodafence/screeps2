@@ -11,6 +11,8 @@ function avg(array: any[]) {
     return array.reduce((a, b) => a + b) / array.length;
 }
 const visuals = true;
+const profiler = true;
+
 interface Memory {
 
     Taskmaster: {
@@ -79,6 +81,8 @@ export class Taskmaster {
         let usedCpu = 0;
         let tasks = mem.storedTasks.sort((a, b) => b.priority - a.priority);
 
+        let profileDict: { [p: string]: number } = {};
+        let totalcpu = Game.cpu.getUsed();
         let iter = 0;
         for (let I of mem.activeTasks) {
             let oldcpu = Game.cpu.getUsed();
@@ -124,15 +128,20 @@ export class Taskmaster {
             }
             if (run == null) {
                 console.log("task is null " + iter);
-                mem.activeTasks.splice(iter, 1);
-                // TODO: This is a really stupid way of handling a null task.
-                this.run();
-                return;
+                if (mem.activeTasks[iter] === I) {
+                    mem.activeTasks.splice(iter, 1);
+                }
+                continue;
             }
             mem.activeTasks[iter] = run;
 
             mem.cpuUsage[I.fullPlan.type] = mem.cpuUsage[I.fullPlan.type] || [];
             mem.cpuUsage[I.fullPlan.type].push(Game.cpu.getUsed() - oldcpu);
+            if(profiler) {
+              profileDict[I.fullPlan.type] = profileDict[I.fullPlan.type] ?? 0;
+
+              profileDict[I.fullPlan.type] += Game.cpu.getUsed() - oldcpu
+            }
             if (mem.cpuUsage[I.fullPlan.type].length > 30) mem.cpuUsage[I.fullPlan.type].shift();
 
             usedCpu += avg(mem.cpuUsage[I.fullPlan.type]);
@@ -170,6 +179,19 @@ export class Taskmaster {
 
         //@ts-ignore
         this.memoryloc.base[this.memoryloc.link] = mem;
+
+        if (profiler) {
+          let print = "";
+          print += "[Taskmaster Profile]\n";
+          let othercalcusage = Game.cpu.getUsed()-totalcpu;
+          for (let I in profileDict) {
+              print += "- " + I + ": " + profileDict[I] + "/" + allocatedCpu + "\n";
+              othercalcusage -= profileDict[I];
+          }
+          print += "- "+"Other Calculations"+": "+othercalcusage+"/"+allocatedCpu+"\n";
+
+          console.log(print);
+        }
         console.log("[Taskmaster] Used " + usedCpu + "/" + allocatedCpu);
     }
 
@@ -217,7 +239,7 @@ export class Taskmaster {
         console.log("Name: "+curtask.name)
         //@ts-ignore
         let ret: taskReturn | boolean = TaskMap[curtask.name](plan.fullPlan.allocated, plan.fullPlan);
-        let functionFinished: boolean = false;
+        let functionFinished: boolean;
         if (typeof ret !== "boolean") {
             plan.fullPlan.allocated = ret.updatedItems !== undefined ? ret.updatedItems : plan.fullPlan.allocated;
             functionFinished = ret.suceeded;
@@ -233,6 +255,8 @@ export class Taskmaster {
                 );
             }
             plan.activeTask += 1;
+
+            return this.RunActiveTask(plan)
         }
 
         return plan;

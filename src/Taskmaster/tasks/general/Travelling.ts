@@ -2,6 +2,7 @@ import { Misc } from "consts/MiscConsts";
 import { addCoordinates } from "functions/misc";
 import { GoRemoteMineConstructor, GoScoutConstructor } from "Taskmaster/planConstructor"
 import { taskReturn } from "Taskmaster/taskdefs"
+import { SayAll } from "../../../functions/sayAll";
 
 interface scoutMemory {
     /**
@@ -66,7 +67,7 @@ export function ScoutRoom(allocatedItems: Id<Creep>[], planState: GoScoutConstru
             continue
         }
         if(creep.room.name!==creep.memory.roomName||creep.pos.inRangeTo(new RoomPosition(25,25,creep.memory.roomName),35)===false) {
-            creep.moveTo(new RoomPosition(25,25,creep.memory.roomName))
+            creep.moveTo(new RoomPosition(25,25,creep.memory.roomName),{maxOps: 300})
         } else {
             let scout: scoutMemory = createRoomData(creep)
             Memory.roomData[creep.room.name] = scout
@@ -127,7 +128,7 @@ export function MoveToRoom(allocatedItems: Id<Creep>[], planState: GoRemoteMineC
         if (creep.room.name !== roomname || creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 14) === false) {
             creep.moveTo(new RoomPosition(25, 25, roomname), { maxOps: 2000,reusePath:40 });
         }
-        if(creep.room.name !== roomname || !creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 20)) {
+        if (creep.room.name !== roomname || !creep.pos.inRangeTo(new RoomPosition(25, 25, roomname), 20)) {
             confirm = false;
         }
 

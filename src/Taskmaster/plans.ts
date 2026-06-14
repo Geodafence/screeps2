@@ -39,87 +39,90 @@ import {
     SpawnQueenTask,
     QueenDepositToSpawnTask,
     ProtectRoomImmortalTask,
-    SpawnDefenderTask
+    SpawnDefenderTask, ImmortalHarvestAndDropTask
 } from "./taskdefs";
 
 
 export function CreateGoHarvestPlan(roomName: string, creep: Creep): GoHarvestConstructor {
+    let sources = creep.room.find(FIND_SOURCES)
+    let untapped = sources.filter((a)=> !global.taskmaster.ContainsPlan("goHarvest",undefined,undefined,a.id));
+    let target =
+        creep.memory.previousTarget !== undefined
+            ? creep.memory.previousTarget
+            : untapped[Math.floor(Math.random() * untapped.length)].id;
     let plan = {
+        // Type of task
+        type: "goHarvest",
 
-      // Type of task
-      type: "goHarvest",
+        // Room name of task
+        roomName: roomName,
 
-      // Room name of task
-      roomName: roomName,
+        // Priority of task
+        priority: 5,
 
-      // Priority of task
-      priority: 5,
+        // Requirements before task can be met
+        requirements: creep !== undefined,
 
-      // Requirements before task can be met
-      requirements: (creep !== undefined),
+        // Cancels the task if any of the allocated creeps die to prevent errors
+        cancelCondition: "anyTargetDiedCondition",
+        // Id of target of this task (eg: a source)
+        targetId: target,
 
-      // Cancels the task if any of the allocated creeps die to prevent errors
-      cancelCondition: "anyTargetDiedCondition",
-      // Id of target of this task (eg: a source)
-      targetId: creep.memory.previousTarget !== undefined ? creep.memory.previousTarget :
-                  creep.room.find(FIND_SOURCES)[Math.floor(Math.random()*creep.room.find(FIND_SOURCES).length)].id,
+        // Ids of creeps or structures that are allocated to this task
+        allocated: [creep.id],
 
-      // Ids of creeps or structures that are allocated to this task
-      allocated: [creep.id],
-
-      taskTree: {
-        // Possible children to be called
-        // Possible child 1
-        findAndHarvestchild: {
-          info: findAndHarvestTask,
-          children: {
-            RemoveFromClosedListTask2: {
-              info:RemoveFromClosedListTask
-            },
-            // child 2, called after child 1 is completed.
-            GoToSpawnTaskchild2: {
-              info: HarvesterGoToSpawnTask,
-              children: {
-                RemoveFromClosedListTask3: {
-                  info: RemoveFromClosedListTask
+        taskTree: {
+            // Possible children to be called
+            // Possible child 1
+            findAndHarvestchild: {
+                info: findAndHarvestTask,
+                children: {
+                    RemoveFromClosedListTask2: {
+                        info: RemoveFromClosedListTask
+                    },
+                    // child 2, called after child 1 is completed.
+                    GoToSpawnTaskchild2: {
+                        info: HarvesterGoToSpawnTask,
+                        children: {
+                            RemoveFromClosedListTask3: {
+                                info: RemoveFromClosedListTask
+                            }
+                        }
+                    },
+                    dropItemsTaskchild2: {
+                        info: dropItemsTask,
+                        children: {
+                            RemoveFromClosedListTask2: {
+                                info: RemoveFromClosedListTask
+                            }
+                        }
+                    }
                 }
-              }
             },
-            dropItemsTaskchild2: {
-              info:dropItemsTask,
-              children: {
-                RemoveFromClosedListTask2: {
-                  info:RemoveFromClosedListTask
+
+            // Possible child 2, has a lower cost but a different condition that cannot be met if findAndHarvestchild is possible.
+            GoToSpawnTaskchild1: {
+                info: HarvesterGoToSpawnTask,
+                children: {
+                    RemoveFromClosedListTask1: {
+                        info: RemoveFromClosedListTask
+                    }
                 }
-              }
+                // If there is no children, the plan will be considered completed
+            },
+            dropItemsTaskchild1: {
+                info: ImmortalHarvestAndDropTask,
+                children: {
+                    RemoveFromClosedListTask4: {
+                        info: RemoveFromClosedListTask
+                    }
+                }
+            },
+            RemoveFromClosedListTask5: {
+                info: RemoveFromClosedListTask
             }
-          }
-        },
-
-        // Possible child 2, has a lower cost but a different condition that cannot be met if findAndHarvestchild is possible.
-        GoToSpawnTaskchild1: {
-          info: HarvesterGoToSpawnTask,
-          children: {
-            RemoveFromClosedListTask1: {
-              info: RemoveFromClosedListTask
-            }
-          }
-          // If there is no children, the plan will be considered completed
-
-        },
-        dropItemsTaskchild1: {
-          info:dropItemsTask,
-          children: {
-            RemoveFromClosedListTask4: {
-              info:RemoveFromClosedListTask
-            }
-          }
-        },
-        RemoveFromClosedListTask5: {
-          info:RemoveFromClosedListTask
-        },
-      },
-    }
+        }
+    };
     return plan
 }
 export function CreateGoHaulPlan(roomName: string, creep: Creep): GoHaulConstructor {
@@ -548,7 +551,9 @@ export function CreateGoRemoteMinePlan(roomfrom: string, room: string, creep: Cr
 }
 export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Creep[]): GoRemoteMineConstructor {
     let haulerMoveToRoom = { ...MoveToRoomTask };
-    haulerMoveToRoom.condition = true;
+    haulerMoveToRoom.cost = 10;
+    let HaulerGrabFromDroppedResourceTask = {... RemoteGrabFromDroppedResourceTask};
+    HaulerGrabFromDroppedResourceTask.cost = 20;
     let plan = {
         // Type of task
         type: "goRemoteHaul",
@@ -573,7 +578,7 @@ export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Cr
                 info: haulerMoveToRoom,
                 children: {
                     RemoteGrabFromDroppedResourceTask: {
-                        info: RemoteGrabFromDroppedResourceTask,
+                        info: HaulerGrabFromDroppedResourceTask,
                         children: {
                             reverseRoomAndPlanIdTask: {
                                 info: reverseRoomAndPlanIdTask,
@@ -585,6 +590,27 @@ export function CreateGoRemoteHaulPlan(roomfrom: string, room: string, creep: Cr
                                                 info: GoToSpawnTask
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            GoToSpawnTask: {
+                info: GoToSpawnTask
+            },
+            RemoteGrabFromDroppedResourceTask: {
+                info: HaulerGrabFromDroppedResourceTask,
+                children: {
+                    reverseRoomAndPlanIdTask: {
+                        info: reverseRoomAndPlanIdTask,
+                        children: {
+                            MoveToRoomTask: {
+                                info: haulerMoveToRoom,
+                                children: {
+                                    GoToSpawnTask: {
+                                        info: GoToSpawnTask
                                     }
                                 }
                             }
@@ -818,6 +844,9 @@ export function CreateGoProtectRoomTask(originalRoom: string, roomName: string, 
                         info: ProtectRoomImmortalTask
                     }
                 }
+            },
+            ProtectRoomImmortalTask: {
+                info: ProtectRoomImmortalTask
             }
         }
     };

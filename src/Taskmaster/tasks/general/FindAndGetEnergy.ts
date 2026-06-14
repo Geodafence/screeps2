@@ -2,7 +2,10 @@ import { GoHarvestConstructor, GoHaulConstructor, GoUpgradeConstructor } from ".
 import { taskReturn } from "../../taskdefs";
 
 
-export function findAndHarvest(allocatedItems: Id<AnyCreep>[] | Id<Structure>[], planState: GoHarvestConstructor | GoUpgradeConstructor): taskReturn {
+export function findAndHarvest(
+    allocatedItems: Id<AnyCreep>[] | Id<Structure>[],
+    planState: GoHarvestConstructor | GoUpgradeConstructor
+): taskReturn {
     let iter = 0;
     let confirm = true;
     for (let I of allocatedItems) {
@@ -40,6 +43,69 @@ export function findAndHarvest(allocatedItems: Id<AnyCreep>[] | Id<Structure>[],
         iter += 1;
     }
 
+    return {
+        suceeded: confirm,
+        status: "no errors",
+        updatedItems: allocatedItems
+    };
+}
+export function ImmortalHarvestAndDrop(
+    allocatedItems: Id<AnyCreep>[] | Id<Structure>[],
+    planState: GoHarvestConstructor | GoUpgradeConstructor
+): taskReturn {
+    let iter = 0;
+    let confirm = true;
+    for (let I of allocatedItems) {
+        let creep = Game.getObjectById(I);
+        if (creep === null || !(creep instanceof Creep)) {
+            allocatedItems.splice(iter, 1);
+            return {
+                suceeded: false,
+                status: "creep doesn't exist",
+                updatedItems: allocatedItems
+            };
+        }
+        let sourceid: Id<Source>;
+        if (typeof planState.targetId === "object") {
+            sourceid = planState.targetId.source;
+        } else {
+            sourceid = planState.targetId;
+        }
+        creep.memory.previousTarget = sourceid;
+        let source: Source = Game.getObjectById(sourceid);
+        if (source === null) {
+            return {
+                suceeded: false,
+                status: "source doesn't exist",
+                updatedItems: allocatedItems
+            };
+        }
+        if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
+            creep.moveTo(source);
+        }
+
+        if (creep.store.getFreeCapacity() !== 0) {
+            confirm = false;
+        }
+        iter += 1;
+    }
+    if (confirm) {
+        iter = 0;
+        for (let I of allocatedItems) {
+            let creep = Game.getObjectById(I);
+            if (creep === null || !(creep instanceof Creep)) {
+                allocatedItems.splice(iter, 1);
+                return {
+                    suceeded: false,
+                    status: "creep doesn't exist",
+                    updatedItems: allocatedItems
+                };
+            }
+            iter += 1;
+            creep.drop(RESOURCE_ENERGY);
+        }
+        confirm = false;
+    }
 
     return {
         suceeded: confirm,
@@ -200,13 +266,12 @@ export function GrabFromDroppedResource(allocatedItems: Id<Creep>[], planState: 
 
         if (item?.resourceType == null) {
             //console.log("This dropped resource died");
-            //confirm = true;
+            confirm = false;
             break;
         }
         if (creep.pickup(item) !== OK) {
             creep.moveTo(item,{maxRooms: 1});
         }
-        console.log(creep.store.getFreeCapacity(), item);
         if (creep.store.getFreeCapacity() > 0) {
             confirm = false;
         } else {

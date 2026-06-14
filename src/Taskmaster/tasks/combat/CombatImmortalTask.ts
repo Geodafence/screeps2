@@ -2,6 +2,7 @@ import { GoHarvestConstructor, planConstructor } from "../../planConstructor";
 import { taskReturn } from "../../taskdefs";
 import { strengthCalc } from "../../../imports/StrengthCalculator";
 import { flee } from "../../../functions/misc";
+import { SayAll } from "../../../functions/sayAll";
 const StrCalc = new strengthCalc();
 export function ProtectRoom(allocatedItems: Id<Creep>[], planState: planConstructor): taskReturn {
     let iter = 0;
@@ -19,8 +20,10 @@ export function ProtectRoom(allocatedItems: Id<Creep>[], planState: planConstruc
             }
             continue;
         }
+        let possible:(Creep|Structure)[] = creep.room.find(FIND_HOSTILE_CREEPS)
+        possible = possible.concat(creep.room.find(FIND_HOSTILE_STRUCTURES))
 
-        let attack = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+        let attack = creep.pos.findClosestByRange(possible);
         if (attack) {
             creep.memory.noAttackers = 0;
             combatCalc(creep, attack);
@@ -42,6 +45,12 @@ export function ProtectRoom(allocatedItems: Id<Creep>[], planState: planConstruc
             }
         }
     }
+    try {
+        SayAll(
+            allocatedItems.map((a) => Game.getObjectById(a)),
+            "birdcowboy"
+        );
+    }  catch (e) {}
     return {
         suceeded: false,
         status: "no errors",

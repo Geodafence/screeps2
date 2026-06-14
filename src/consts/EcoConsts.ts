@@ -20,12 +20,12 @@ export const creepLimits: {
     remotehaulers: { [RCL: string]: number; default: number };
 } = {
     harvesters: { default: 2 },
-    haulers: { default: 2, 1: 4, 2: 4, 5: 2 },
-    upgraders: { default: 3, 2: 7, 3: 8, 4: 5 },
+    haulers: { default: 4, 1: 4, 2: 4, 5: 2 },
+    upgraders: { default: 3, 2: 7, 3: 10, 4: 3 },
     builders: { default: 2 },
     scouts: { default: 3 },
-    remoteminers: { default: 5, 1: 2, 3: 6, 4: 4},
-    remotehaulers: { default: 10, 1: 4, 3: 12, 4: 8 },
+    remoteminers: { default: 5, 1: 2, 2: 5, 3: 4, 4: 5},
+    remotehaulers: { default: 10, 1: 4, 2: 15, 3: 12, 4: 10 },
     queens: { default: 2 },
     defenders: { default: 2 },
 };
@@ -54,8 +54,8 @@ export const buildOrder: creationOrder[] = [
     },
     {
         planFunction: CreateSpawnDefenderPlan,
-        planSkipCondition: (room:Room) => {
-            return !room.memory.flags.threatened
+        planSkipCondition: (room: Room) => {
+            return !room.memory.flags.threatened;
         },
         planName: "SpawnDefender",
         pointer: "defenders"
@@ -88,6 +88,9 @@ export const buildOrder: creationOrder[] = [
     },
     {
         planFunction: CreateSpawnUpgraderPlan,
+        planSkipCondition: (room: Room) => {
+            return room.find(FIND_CONSTRUCTION_SITES).length > 0;
+        },
         planName: "SpawnUpgrader",
         pointer: "upgraders"
     },

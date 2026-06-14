@@ -18,7 +18,7 @@ import {
     GrabFromDroppedResource,
     GrabFromSpawn,
     GrabFromStorage,
-    HaulerGrabFromDroppedResource
+    HaulerGrabFromDroppedResource, ImmortalHarvestAndDrop
 } from "Taskmaster/tasks/general/FindAndGetEnergy";
 import { MoveToRoom, ScoutRoom } from "./tasks/general/Travelling";
 import { FindAndUpdateRemotes, GoMineAndDrop } from "./tasks/remoteSpecific/MineAndDrop";
@@ -65,43 +65,71 @@ function findAndHarvestFunction(usedItems:Id<AnyCreep>[],planState:GoHarvestCons
     }).length===usedItems.length
 }
 
-function MoveToRoomCondition(usedItems:Id<AnyCreep>[],planState:planConstructor) {
-    const targetRoom = typeof planState.targetId === 'string' ? planState.targetId : String(planState.targetId)
-    console.log("Creeps: "+usedItems)
-    return usedItems.some(a=>{
-        let creep = Game.getObjectById(a)
-        if(creep===null) {console.log("Creepnoexist :(");return false}
-        console.log("Is creep in room? " + creep.room?.name !== targetRoom)
-        return creep.room?.name !== targetRoom
-    })
+function MoveToRoomCondition(usedItems: Id<AnyCreep>[], planState: planConstructor) {
+    const targetRoom = typeof planState.targetId === "string" ? planState.targetId : String(planState.targetId);
+    console.log("Creeps: " + usedItems);
+    return usedItems.some((a) => {
+        let creep = Game.getObjectById(a);
+        if (creep === null) {
+            return false;
+        }
+        return creep.room?.name !== targetRoom;
+    });
+}
+function InRoomCondition(usedItems: Id<AnyCreep>[], planState: planConstructor) {
+    const targetRoom = typeof planState.targetId === "string" ? planState.targetId : String(planState.targetId);
+    console.log("Creeps: " + usedItems);
+    return usedItems.every((a) => {
+        let creep = Game.getObjectById(a);
+        if (creep === null) {
+            console.log("Creepnoexist :(");
+            return false;
+        }
+        console.log("Is creep in room? " + creep.room?.name !== targetRoom);
+        return creep.room?.name === targetRoom;
+    });
 }
 function GoUpgradeFunction(usedItems:Id<AnyCreep>[],planState:GoHarvestConstructor) {
     return true
 }
-function GrabFromSpawnFunction(usedItems:Id<Creep>[],planState:GoUpgradeConstructor) {
-
-    let uno = usedItems.filter(a=>{
-        let creep = Game.getObjectById(a)
-        if(creep===null) return false
-        return true
-    }).length===usedItems.length
-    let dos = Game.getObjectById(planState.targetId.spawn)
-    let tres = Game.getObjectById(usedItems[0]).room.find(FIND_STRUCTURES,{filter:(a)=>a.structureType===STRUCTURE_CONTAINER})[0]
-    if(dos===null) {
+function GrabFromSpawnFunction(usedItems: Id<Creep>[], planState: GoUpgradeConstructor) {
+    let uno =
+        usedItems.filter((a) => {
+            let creep = Game.getObjectById(a);
+            if (creep === null) return false;
+            return true;
+        }).length === usedItems.length;
+    let dos = Game.getObjectById(planState.targetId.spawn);
+    let tres = Game.getObjectById(usedItems[0]).room.find(FIND_STRUCTURES, {
+        filter: (a) => a.structureType === STRUCTURE_CONTAINER
+    })[0];
+    if (dos === null) {
         return false;
     }
-    return ((dos&&dos.store[RESOURCE_ENERGY]>200)||(tres))&&uno
+    return ((dos && dos.store[RESOURCE_ENERGY] > 200) || tres) && uno;
 }
-function ContainerNotExistsCondition(usedItems:Id<Creep>[],planState:planConstructor) {
-    return Game.getObjectById(usedItems[0]).room.find(FIND_STRUCTURES,{filter:(s)=>s.structureType===STRUCTURE_CONTAINER}).length===0
+function ContainerNotExistsCondition(usedItems: Id<Creep>[], planState: planConstructor) {
+    if (!Game.getObjectById(usedItems[0]))
+        return false;
+    return (
+        Game.getObjectById(usedItems[0]).room.find(FIND_STRUCTURES, {
+            filter: (s) => s.structureType === STRUCTURE_CONTAINER
+        }).length === 0
+    );
 }
-function HarvesterGoToSpawnCondition(usedItems:Id<Creep>[],planState:planConstructor) {
-
-    return usedItems.filter(a=>{
-        let creep = Game.getObjectById(a)
-        if(creep===null) return false
-        return creep.store.getFreeCapacity()===0
-    }).length===usedItems.length&&Game.getObjectById(usedItems[0]).room.memory.creeps.haulers.all.length===0
+function HarvesterGoToSpawnCondition(usedItems: Id<Creep>[], planState: planConstructor) {
+    return (
+        usedItems.filter((a) => {
+            let creep = Game.getObjectById(a);
+            if (creep === null) return false;
+            return creep.store.getFreeCapacity() === 0;
+        }).length === usedItems.length && Game.getObjectById(usedItems[0]).room.memory.creeps.haulers.all.length === 0
+    );
+}
+function IsHaulersCondition(usedItems: Id<Creep>[], planState: planConstructor) {
+    return (
+        Game.getObjectById(usedItems[0]).room.memory.creeps.haulers.all.length > 0
+    );
 }
 function GoToSpawnCondition(usedItems:Id<Creep>[],planState:planConstructor) {
 
@@ -153,6 +181,7 @@ export const TaskMap: {
     GoUpgradeFunction: GoUpgradeFunction,
     removeCreepFromList: removeCreepFromList,
     ContainerNotExistsCondition: ContainerNotExistsCondition,
+  IsHaulersCondition: IsHaulersCondition,
     GoMineAndDrop: GoMineAndDrop,
     SpawnRemoteFunction: SpawnRemote,
     FindAndUpdateRemotes: FindAndUpdateRemotes,
@@ -161,7 +190,9 @@ export const TaskMap: {
     QueendepositToSpawn: QueendepositToSpawn,
     GrabFromStorage: GrabFromStorage,
     ProtectRoom: ProtectRoom,
-    SpawnDefender: SpawnDefender
+    SpawnDefender: SpawnDefender,
+    InRoomCondition: InRoomCondition,
+    ImmortalHarvestAndDrop: ImmortalHarvestAndDrop,
 };
 // Examples
 interface CreepTaskConstructor extends task {
@@ -281,13 +312,12 @@ export const GrabFromDroppedResourceTask: CreepTaskConstructor = {
 };
 
 export const RemoteGrabFromDroppedResourceTask: CreepTaskConstructor = {
-
     condition: "AlwaysTrueCondition",
 
     name: "GlobalGrabFromDroppedResource",
 
-    cost: 2,
-}
+    cost: 2
+};
 export const dropItemsTask: CreepTaskConstructor = {
 
     condition: "DropItemsCondition",
@@ -295,6 +325,13 @@ export const dropItemsTask: CreepTaskConstructor = {
     name: "dropItems",
 
     cost: 3,
+}
+export const ImmortalHarvestAndDropTask: CreepTaskConstructor = {
+  condition: "IsHaulersCondition",
+
+  name: "ImmortalHarvestAndDrop",
+
+  cost: 1
 }
 export const buildContainerTask: CreepTaskConstructor = {
 
@@ -387,7 +424,7 @@ export const SpawnQueenTask: CreepTaskConstructor = {
     cost: 1
 };
 export const ProtectRoomImmortalTask: CreepTaskConstructor = {
-    condition: "AlwaysTrueCondition",
+    condition: "InRoomCondition",
 
     name: "ProtectRoom",
 

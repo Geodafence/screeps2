@@ -87,9 +87,13 @@ function calcBestRattackBody(maxprice: number): BodyPartConstant[] {
 }
 
 
-let harvesterdict:{[cost:number]:BodyPartConstant[]} = {}
-for(let I = 6; I < 20; I++) {
-    harvesterdict[I*50] = calcBestHarvesterBody(I*50)
+let harvesterdict: { [cost: number]: BodyPartConstant[] } = {};
+for (let I = 6; I < 20; I++) {
+    harvesterdict[I * 50] = calcBestHarvesterBody(I * 50);
+}
+let remotedict: { [cost: number]: BodyPartConstant[] } = {};
+for(let I = 6; I < 18; I++) {
+    remotedict[I*50] = calcBestHarvesterBody(I*50)
 }
 let upgraderdict: { [cost: number]: BodyPartConstant[] } = {};
 for (let I = 6; I < 60; I++) {
